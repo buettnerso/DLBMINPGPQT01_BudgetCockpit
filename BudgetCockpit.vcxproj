@@ -114,6 +114,10 @@
   <ItemGroup>
     <ClCompile Include="BudgetManager.cpp" />
     <ClCompile Include="CategoryManager.cpp" />
+    <ClCompile Include="stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="Transaction.cpp" />
     <ClInclude Include="BudgetManager.h" />
     <ClInclude Include="CategoryManager.h" />
