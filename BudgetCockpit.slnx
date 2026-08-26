@@ -2,5 +2,6 @@
   <Configurations>
     <Platform Name="x64" />
   </Configurations>
+  <Project Path="../BudgetCockpitTests/BudgetCockpitTests.vcxproj" Id="cef4009a-f8e9-4dfb-9cc2-18351bd7b168" />
   <Project Path="BudgetCockpit.vcxproj" Id="6cd54c32-d297-42a1-95e7-1d6372f4f890" />
 </Solution>
