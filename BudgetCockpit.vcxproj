@@ -112,16 +112,17 @@
     </QtMoc>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BudgetManager.cpp" />
+    <ClCompile Include="CategoryManager.cpp" />
+    <ClCompile Include="Transaction.cpp" />
+    <ClInclude Include="BudgetManager.h" />
+    <ClInclude Include="CategoryManager.h" />
+    <ClInclude Include="Transaction.h" />
     <QtRcc Include="BudgetCockpit.qrc" />
     <QtUic Include="BudgetCockpit.ui" />
     <QtMoc Include="BudgetCockpit.h" />
     <ClCompile Include="BudgetCockpit.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClInclude Include="stdafx.h" />
-    <ClCompile Include="stdafx.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">Create</PrecompiledHeader>
-    </ClCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
