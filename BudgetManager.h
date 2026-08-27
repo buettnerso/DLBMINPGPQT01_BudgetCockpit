@@ -49,6 +49,16 @@ public:
     ) const;
 
 
+    // Filterung nach Typ (Einnahme / Ausgabe)
+    QList<Transaction> filterByType(
+        const QString& type
+    ) const;
+
+    QList<Transaction> filterByType(
+        const QList<Transaction>& transactionsToFilter,
+        const QString& type
+    ) const;
+
 private:
     QList<Transaction> transactions;
 };

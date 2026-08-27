@@ -113,3 +113,37 @@ QList<Transaction> BudgetManager::filterByCategory(
 
     return filteredTransactions;
 }
+
+QList<Transaction> BudgetManager::filterByType(
+    const QString& type) const
+{
+    return filterByType(transactions, type);
+}
+
+QList<Transaction> BudgetManager::filterByType(
+    const QList<Transaction>& transactionsToFilter,
+    const QString& type) const
+{
+    QList<Transaction> filteredTransactions;
+
+    QString cleanedType = type.trimmed();
+
+    // Kein Typ angegeben:
+    // Es wird kein Typ-Filter angewendet.
+    if (cleanedType.isEmpty())
+    {
+        return transactionsToFilter;
+    }
+
+    for (const Transaction& transaction : transactionsToFilter)
+    {
+        if (transaction.getType().compare(
+            cleanedType,
+            Qt::CaseInsensitive) == 0)
+        {
+            filteredTransactions.append(transaction);
+        }
+    }
+
+    return filteredTransactions;
+}
