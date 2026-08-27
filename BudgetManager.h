@@ -87,6 +87,18 @@ public:
         std::optional<double> maxAmount
     ) const;
 
+    // Kombination aller Filter
+    QList<Transaction> filterTransactions(
+        const QString& category,
+        const QString& type,
+        const QDate& fromDate,
+        const QDate& toDate,
+        std::optional<double> minAmount,
+        std::optional<double> maxAmount
+    ) const;
+
+
+
 private:
     QList<Transaction> transactions;
 };

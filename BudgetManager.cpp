@@ -258,3 +258,42 @@ QList<Transaction> BudgetManager::filterByAmount(
 
     return filteredTransactions;
 }
+
+QList<Transaction> BudgetManager::filterTransactions(
+    const QString& category,
+    const QString& type,
+    const QDate& fromDate,
+    const QDate& toDate,
+    std::optional<double> minAmount,
+    std::optional<double> maxAmount) const
+{
+    QList<Transaction> filteredTransactions = transactions;
+
+    filteredTransactions =
+        filterByCategory(
+            filteredTransactions,
+            category
+        );
+
+    filteredTransactions =
+        filterByType(
+            filteredTransactions,
+            type
+        );
+
+    filteredTransactions =
+        filterByDateRange(
+            filteredTransactions,
+            fromDate,
+            toDate
+        );
+
+    filteredTransactions =
+        filterByAmount(
+            filteredTransactions,
+            minAmount,
+            maxAmount
+        );
+
+    return filteredTransactions;
+}
