@@ -2,6 +2,7 @@
 
 #include <QList>
 #include <QString>
+#include <QDate>
 
 #include "Transaction.h"
 
@@ -57,6 +58,18 @@ public:
     QList<Transaction> filterByType(
         const QList<Transaction>& transactionsToFilter,
         const QString& type
+    ) const;
+
+    // Filterung nach Zeitraum
+    QList<Transaction> filterByDateRange(
+        const QDate& fromDate,
+        const QDate& toDate
+    ) const;
+
+    QList<Transaction> filterByDateRange(
+        const QList<Transaction>& transactionsToFilter,
+        const QDate& fromDate,
+        const QDate& toDate
     ) const;
 
 private:

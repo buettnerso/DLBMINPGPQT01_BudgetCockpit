@@ -147,3 +147,58 @@ QList<Transaction> BudgetManager::filterByType(
 
     return filteredTransactions;
 }
+
+QList<Transaction> BudgetManager::filterByDateRange(
+    const QDate& fromDate,
+    const QDate& toDate) const
+{
+    return filterByDateRange(
+        transactions,
+        fromDate,
+        toDate
+    );
+}
+
+QList<Transaction> BudgetManager::filterByDateRange(
+    const QList<Transaction>& transactionsToFilter,
+    const QDate& fromDate,
+    const QDate& toDate) const
+{
+    QList<Transaction> filteredTransactions;
+
+    // Kein Datumsfilter gesetzt:
+    // Alle Transaktionen zurückgeben.
+    if (!fromDate.isValid() && !toDate.isValid())
+    {
+        return transactionsToFilter;
+    }
+
+    // Ungültiger Zeitraum:
+    // Startdatum liegt nach dem Enddatum.
+    if (fromDate.isValid() &&
+        toDate.isValid() &&
+        fromDate > toDate)
+    {
+        return filteredTransactions;
+    }
+
+    for (const Transaction& transaction : transactionsToFilter)
+    {
+        const QDate transactionDate = transaction.getDate();
+
+        bool matchesFromDate =
+            !fromDate.isValid() ||
+            transactionDate >= fromDate;
+
+        bool matchesToDate =
+            !toDate.isValid() ||
+            transactionDate <= toDate;
+
+        if (matchesFromDate && matchesToDate)
+        {
+            filteredTransactions.append(transaction);
+        }
+    }
+
+    return filteredTransactions;
+}
