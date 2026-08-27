@@ -77,3 +77,39 @@ double BudgetManager::calculateBalance(
     return calculateIncome(transactionsToCalculate)
         - calculateExpenses(transactionsToCalculate);
 }
+
+QList<Transaction> BudgetManager::filterByCategory(   // Filterung nach Kategorie für alle gespeicherten Transaktionen
+    const QString& category) const
+{
+    return filterByCategory(transactions, category);
+}
+
+
+
+QList<Transaction> BudgetManager::filterByCategory(
+    const QList<Transaction>& transactionsToFilter,
+    const QString& category) const
+{
+    QList<Transaction> filteredTransactions;
+
+    QString cleanedCategory = category.trimmed();
+
+    // Keine Kategorie angegeben:
+    // Es wird kein Kategorie-Filter angewendet.
+    if (cleanedCategory.isEmpty())
+    {
+        return transactionsToFilter;
+    }
+
+    for (const Transaction& transaction : transactionsToFilter)
+    {
+        if (transaction.getCategory().compare(
+            cleanedCategory,
+            Qt::CaseInsensitive) == 0)
+        {
+            filteredTransactions.append(transaction);
+        }
+    }
+
+    return filteredTransactions;
+}
