@@ -60,6 +60,8 @@ public:
         const QString& type
     ) const;
 
+
+
     // Filterung nach Zeitraum
     QList<Transaction> filterByDateRange(
         const QDate& fromDate,
@@ -70,6 +72,19 @@ public:
         const QList<Transaction>& transactionsToFilter,
         const QDate& fromDate,
         const QDate& toDate
+    ) const;
+
+
+    // Filter nach Betrag
+    QList<Transaction> filterByAmount(
+        std::optional<double> minAmount,
+        std::optional<double> maxAmount
+    ) const;
+
+    QList<Transaction> filterByAmount(
+        const QList<Transaction>& transactionsToFilter,
+        std::optional<double> minAmount,
+        std::optional<double> maxAmount
     ) const;
 
 private:

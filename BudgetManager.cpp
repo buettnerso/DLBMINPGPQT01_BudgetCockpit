@@ -202,3 +202,59 @@ QList<Transaction> BudgetManager::filterByDateRange(
 
     return filteredTransactions;
 }
+
+QList<Transaction> BudgetManager::filterByAmount(
+    std::optional<double> minAmount,
+    std::optional<double> maxAmount) const
+{
+    return filterByAmount(
+        transactions,
+        minAmount,
+        maxAmount
+    );
+}
+
+QList<Transaction> BudgetManager::filterByAmount(
+    const QList<Transaction>& transactionsToFilter,
+    std::optional<double> minAmount,
+    std::optional<double> maxAmount) const
+{
+    QList<Transaction> filteredTransactions;
+
+    // Keine Betragsgrenzen gesetzt:
+    // Kein Betragsfilter wird angewendet.
+    if (!minAmount.has_value() &&
+        !maxAmount.has_value())
+    {
+        return transactionsToFilter;
+    }
+
+    // Ungültiger Wertebereich:
+    // Mindestbetrag ist größer als Höchstbetrag.
+    if (minAmount.has_value() &&
+        maxAmount.has_value() &&
+        minAmount.value() > maxAmount.value())
+    {
+        return filteredTransactions;
+    }
+
+    for (const Transaction& transaction : transactionsToFilter)
+    {
+        const double amount = transaction.getAmount();
+
+        bool matchesMinimum =
+            !minAmount.has_value() ||
+            amount >= minAmount.value();
+
+        bool matchesMaximum =
+            !maxAmount.has_value() ||
+            amount <= maxAmount.value();
+
+        if (matchesMinimum && matchesMaximum)
+        {
+            filteredTransactions.append(transaction);
+        }
+    }
+
+    return filteredTransactions;
+}
