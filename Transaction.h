@@ -3,7 +3,7 @@
 #include <QDate>
 #include <QString>
 
-class Transaction  // Klasse zur Darstellung einer Transaktion mit Datum, Typ, Kategorie, Betrag und Beschreibung
+class Transaction 
 {
 public:
     Transaction(
@@ -17,8 +17,8 @@ public:
     QDate getDate() const;
     QString getType() const;
     QString getCategory() const;
-	double getAmount() const;  // Methode zum Abrufen des Betrags der Transaktion
-	QString getDescription() const; // Methode zum Abrufen der Beschreibung der Transaktion
+	double getAmount() const;
+	QString getDescription() const;
 
 private:
     QDate date;

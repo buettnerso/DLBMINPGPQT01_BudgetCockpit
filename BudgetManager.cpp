@@ -1,12 +1,17 @@
 #include "stdafx.h"
 #include "BudgetManager.h"
 
-// Implementierung der Methoden der BudgetManager-Klasse
 
-void BudgetManager::addTransaction(const Transaction& transaction)
+// ============================================================
+// TRANSAKTIONEN
+// ============================================================
+
+void BudgetManager::addTransaction(
+    const Transaction& transaction)
 {
     transactions.append(transaction);
 }
+
 
 bool BudgetManager::removeTransaction(int index)
 {
@@ -19,25 +24,34 @@ bool BudgetManager::removeTransaction(int index)
     return true;
 }
 
+
 const QList<Transaction>& BudgetManager::getAllTransactions() const
 {
     return transactions;
 }
+
+
+// ============================================================
+// BERECHNUNGEN
+// ============================================================
 
 double BudgetManager::calculateIncome() const
 {
     return calculateIncome(transactions);
 }
 
+
 double BudgetManager::calculateExpenses() const
 {
     return calculateExpenses(transactions);
 }
 
+
 double BudgetManager::calculateBalance() const
 {
     return calculateBalance(transactions);
 }
+
 
 double BudgetManager::calculateIncome(
     const QList<Transaction>& transactionsToCalculate) const
@@ -55,6 +69,7 @@ double BudgetManager::calculateIncome(
     return income;
 }
 
+
 double BudgetManager::calculateExpenses(
     const QList<Transaction>& transactionsToCalculate) const
 {
@@ -71,6 +86,7 @@ double BudgetManager::calculateExpenses(
     return expenses;
 }
 
+
 double BudgetManager::calculateBalance(
     const QList<Transaction>& transactionsToCalculate) const
 {
@@ -78,28 +94,31 @@ double BudgetManager::calculateBalance(
         - calculateExpenses(transactionsToCalculate);
 }
 
-QList<Transaction> BudgetManager::filterByCategory(   // Filterung nach Kategorie für alle gespeicherten Transaktionen
+
+// ============================================================
+// FILTER: KATEGORIE
+// ============================================================
+
+QList<Transaction> BudgetManager::filterByCategory(
     const QString& category) const
 {
     return filterByCategory(transactions, category);
 }
 
 
-
 QList<Transaction> BudgetManager::filterByCategory(
     const QList<Transaction>& transactionsToFilter,
     const QString& category) const
 {
-    QList<Transaction> filteredTransactions;
+    const QString cleanedCategory = category.trimmed();
 
-    QString cleanedCategory = category.trimmed();
-
-    // Keine Kategorie angegeben:
-    // Es wird kein Kategorie-Filter angewendet.
+    // Eine leere Kategorie deaktiviert diesen Filter.
     if (cleanedCategory.isEmpty())
     {
         return transactionsToFilter;
     }
+
+    QList<Transaction> filteredTransactions;
 
     for (const Transaction& transaction : transactionsToFilter)
     {
@@ -114,26 +133,31 @@ QList<Transaction> BudgetManager::filterByCategory(
     return filteredTransactions;
 }
 
+
+// ============================================================
+// FILTER: TYP
+// ============================================================
+
 QList<Transaction> BudgetManager::filterByType(
     const QString& type) const
 {
     return filterByType(transactions, type);
 }
 
+
 QList<Transaction> BudgetManager::filterByType(
     const QList<Transaction>& transactionsToFilter,
     const QString& type) const
 {
-    QList<Transaction> filteredTransactions;
+    const QString cleanedType = type.trimmed();
 
-    QString cleanedType = type.trimmed();
-
-    // Kein Typ angegeben:
-    // Es wird kein Typ-Filter angewendet.
+    // Ein leerer Typ deaktiviert diesen Filter.
     if (cleanedType.isEmpty())
     {
         return transactionsToFilter;
     }
+
+    QList<Transaction> filteredTransactions;
 
     for (const Transaction& transaction : transactionsToFilter)
     {
@@ -148,6 +172,11 @@ QList<Transaction> BudgetManager::filterByType(
     return filteredTransactions;
 }
 
+
+// ============================================================
+// FILTER: ZEITRAUM
+// ============================================================
+
 QList<Transaction> BudgetManager::filterByDateRange(
     const QDate& fromDate,
     const QDate& toDate) const
@@ -159,25 +188,25 @@ QList<Transaction> BudgetManager::filterByDateRange(
     );
 }
 
+
 QList<Transaction> BudgetManager::filterByDateRange(
     const QList<Transaction>& transactionsToFilter,
     const QDate& fromDate,
     const QDate& toDate) const
 {
-    QList<Transaction> filteredTransactions;
-
-    // Kein Datumsfilter gesetzt:
-    // Alle Transaktionen zurückgeben.
+    // Zwei ungültige QDate-Objekte bedeuten:
+    // Der Datumsfilter ist deaktiviert.
     if (!fromDate.isValid() && !toDate.isValid())
     {
         return transactionsToFilter;
     }
 
-    // Ungültiger Zeitraum:
-    // Startdatum liegt nach dem Enddatum.
-    if (fromDate.isValid() &&
-        toDate.isValid() &&
-        fromDate > toDate)
+    QList<Transaction> filteredTransactions;
+
+    // Ein invertierter Zeitraum ist kein gültiger Filterbereich.
+    if (fromDate.isValid()
+        && toDate.isValid()
+        && fromDate > toDate)
     {
         return filteredTransactions;
     }
@@ -186,13 +215,13 @@ QList<Transaction> BudgetManager::filterByDateRange(
     {
         const QDate transactionDate = transaction.getDate();
 
-        bool matchesFromDate =
-            !fromDate.isValid() ||
-            transactionDate >= fromDate;
+        const bool matchesFromDate =
+            !fromDate.isValid()
+            || transactionDate >= fromDate;
 
-        bool matchesToDate =
-            !toDate.isValid() ||
-            transactionDate <= toDate;
+        const bool matchesToDate =
+            !toDate.isValid()
+            || transactionDate <= toDate;
 
         if (matchesFromDate && matchesToDate)
         {
@@ -202,6 +231,11 @@ QList<Transaction> BudgetManager::filterByDateRange(
 
     return filteredTransactions;
 }
+
+
+// ============================================================
+// FILTER: BETRAG
+// ============================================================
 
 QList<Transaction> BudgetManager::filterByAmount(
     std::optional<double> minAmount,
@@ -214,26 +248,24 @@ QList<Transaction> BudgetManager::filterByAmount(
     );
 }
 
+
 QList<Transaction> BudgetManager::filterByAmount(
     const QList<Transaction>& transactionsToFilter,
     std::optional<double> minAmount,
     std::optional<double> maxAmount) const
 {
-    QList<Transaction> filteredTransactions;
-
-    // Keine Betragsgrenzen gesetzt:
-    // Kein Betragsfilter wird angewendet.
-    if (!minAmount.has_value() &&
-        !maxAmount.has_value())
+    // Ohne Unter- und Obergrenze ist der Betragsfilter deaktiviert.
+    if (!minAmount.has_value() && !maxAmount.has_value())
     {
         return transactionsToFilter;
     }
 
-    // Ungültiger Wertebereich:
-    // Mindestbetrag ist größer als Höchstbetrag.
-    if (minAmount.has_value() &&
-        maxAmount.has_value() &&
-        minAmount.value() > maxAmount.value())
+    QList<Transaction> filteredTransactions;
+
+    // Eine Untergrenze über der Obergrenze ist ungültig.
+    if (minAmount.has_value()
+        && maxAmount.has_value()
+        && minAmount.value() > maxAmount.value())
     {
         return filteredTransactions;
     }
@@ -242,13 +274,13 @@ QList<Transaction> BudgetManager::filterByAmount(
     {
         const double amount = transaction.getAmount();
 
-        bool matchesMinimum =
-            !minAmount.has_value() ||
-            amount >= minAmount.value();
+        const bool matchesMinimum =
+            !minAmount.has_value()
+            || amount >= minAmount.value();
 
-        bool matchesMaximum =
-            !maxAmount.has_value() ||
-            amount <= maxAmount.value();
+        const bool matchesMaximum =
+            !maxAmount.has_value()
+            || amount <= maxAmount.value();
 
         if (matchesMinimum && matchesMaximum)
         {
@@ -258,6 +290,11 @@ QList<Transaction> BudgetManager::filterByAmount(
 
     return filteredTransactions;
 }
+
+
+// ============================================================
+// KOMBINIERTE FILTERUNG
+// ============================================================
 
 QList<Transaction> BudgetManager::filterTransactions(
     const QString& category,

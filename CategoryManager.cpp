@@ -1,7 +1,10 @@
 #include "stdafx.h"
 #include "CategoryManager.h"
 
-// Implementierung der Methoden der CategoryManager-Klasse
+
+// ============================================================
+// INITIALISIERUNG
+// ============================================================
 
 CategoryManager::CategoryManager()
 {
@@ -10,29 +13,35 @@ CategoryManager::CategoryManager()
     categories.append("Freizeit");
 }
 
-bool CategoryManager::addCategory(const QString& category)  // Methode zum Hinzufügen einer neuen Kategorie
+
+// ============================================================
+// KATEGORIEN VERWALTEN
+// ============================================================
+
+bool CategoryManager::addCategory(const QString& category)
 {
-    QString cleanedCategory = category.trimmed();
+    const QString cleanedCategory = category.trimmed();
 
-    if (cleanedCategory.isEmpty()) 
+    if (cleanedCategory.isEmpty())
     {
         return false;
     }
 
-	if (containsCategory(cleanedCategory)) // Überprüfen, ob die Kategorie bereits existiert
+    if (containsCategory(cleanedCategory))
     {
         return false;
     }
 
-	categories.append(cleanedCategory); // Hinzufügen der neuen Kategorie zur Liste
-	return true; // Rückgabe von true, wenn die Kategorie erfolgreich hinzugefügt wurde
+    categories.append(cleanedCategory);
+    return true;
 }
 
-bool CategoryManager::containsCategory(const QString& category) const 
-{
-	QString cleanedCategory = category.trimmed(); // Entfernen von führenden und nachgestellten Leerzeichen
 
-    for (const QString& existingCategory : categories) 
+bool CategoryManager::containsCategory(const QString& category) const
+{
+    const QString cleanedCategory = category.trimmed();
+
+    for (const QString& existingCategory : categories)
     {
         if (existingCategory.compare(
             cleanedCategory,
@@ -42,10 +51,15 @@ bool CategoryManager::containsCategory(const QString& category) const
         }
     }
 
-	return false;  // Rückgabe von false, wenn die Kategorie nicht gefunden wurde
+    return false;
 }
 
-const QStringList& CategoryManager::getCategories() const  // Methode zum Abrufen der Liste der Kategorien
+
+// ============================================================
+// KATEGORIEN ABRUFEN
+// ============================================================
+
+const QStringList& CategoryManager::getCategories() const
 {
     return categories;
 }

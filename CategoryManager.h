@@ -3,7 +3,7 @@
 #include <QString>
 #include <QStringList>
 
-class CategoryManager  // Klasse zur Verwaltung von Kategorien
+class CategoryManager 
 {
 public:
     CategoryManager();
