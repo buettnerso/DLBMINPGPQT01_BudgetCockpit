@@ -20,8 +20,11 @@ public:
     void addTransaction(const Transaction& transaction);
     bool removeTransaction(int index);
 
-    const QList<Transaction>& getAllTransactions() const;
+    void setTransactions(
+        const QList<Transaction>& newTransactions
+    );
 
+    const QList<Transaction>& getAllTransactions() const;
 
     // ========================================================
     // Berechnungen

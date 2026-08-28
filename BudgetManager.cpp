@@ -24,6 +24,11 @@ bool BudgetManager::removeTransaction(int index)
     return true;
 }
 
+void BudgetManager::setTransactions(
+    const QList<Transaction>& newTransactions)
+{
+    transactions = newTransactions;
+}
 
 const QList<Transaction>& BudgetManager::getAllTransactions() const
 {
