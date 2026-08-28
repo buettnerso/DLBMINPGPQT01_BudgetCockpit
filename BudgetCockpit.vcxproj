@@ -123,10 +123,12 @@
     <ClInclude Include="CategoryManager.h" />
     <ClInclude Include="Transaction.h" />
     <QtRcc Include="BudgetCockpit.qrc" />
-    <QtUic Include="BudgetCockpit.ui" />
     <QtMoc Include="BudgetCockpit.h" />
     <ClCompile Include="BudgetCockpit.cpp" />
     <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtUic Include="..\..\..\..\Downloads\BudgetCockpit.ui" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

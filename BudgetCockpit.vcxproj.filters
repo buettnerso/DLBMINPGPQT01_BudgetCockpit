@@ -26,9 +26,6 @@
     <QtRcc Include="BudgetCockpit.qrc">
       <Filter>Resource Files</Filter>
     </QtRcc>
-    <QtUic Include="BudgetCockpit.ui">
-      <Filter>Form Files</Filter>
-    </QtUic>
     <QtMoc Include="BudgetCockpit.h">
       <Filter>Header Files</Filter>
     </QtMoc>
@@ -63,5 +60,10 @@
     <ClInclude Include="CategoryManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <QtUic Include="..\..\..\..\Downloads\BudgetCockpit.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
   </ItemGroup>
 </Project>
