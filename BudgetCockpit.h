@@ -27,6 +27,7 @@ private slots:
 
     // CSV-Datei öffnen
     void openCsvFile();
+	void saveCsvFile();
 
 private:
     Ui::BudgetCockpitClass ui;

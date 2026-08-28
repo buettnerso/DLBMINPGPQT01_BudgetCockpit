@@ -43,6 +43,13 @@ BudgetCockpit::BudgetCockpit(QWidget* parent)
         this,
         &BudgetCockpit::openCsvFile
     );
+
+    connect(
+        ui.btnSaveCsv,
+        &QPushButton::clicked,
+        this,
+        &BudgetCockpit::saveCsvFile
+    );
 }
 
 
@@ -222,3 +229,99 @@ void BudgetCockpit::openCsvFile()
         .arg(QFileInfo(filePath).fileName())
     );
 }
+
+	//--------------------------------------------------------------
+	// CSV Speichern
+	//--------------------------------------------------------------    
+
+
+    void BudgetCockpit::saveCsvFile()
+    {
+        QString suggestedPath =
+            currentCsvFilePath;
+
+
+        const QString filePath =
+            QFileDialog::getSaveFileName(
+                this,
+                "Budget-Datei speichern",
+                suggestedPath,
+                "CSV-Dateien (*.csv);;Alle Dateien (*.*)"
+            );
+
+
+        // Nutzer hat Abbrechen gewählt.
+        if (filePath.isEmpty())
+        {
+            return;
+        }
+
+
+        QString finalFilePath =
+            filePath;
+
+
+        // Falls keine Dateiendung angegeben wurde,
+        // automatisch .csv ergänzen.
+        if (!finalFilePath.endsWith(
+            ".csv",
+            Qt::CaseInsensitive))
+        {
+            finalFilePath += ".csv";
+        }
+
+
+        QString errorMessage;
+
+
+        const bool success =
+            csvRepository.save(
+                finalFilePath,
+                budgetManager.getAllTransactions(),
+                &errorMessage
+            );
+
+
+        if (!success)
+        {
+            QMessageBox::critical(
+                this,
+                "Budget-Datei konnte nicht gespeichert werden",
+                errorMessage
+            );
+
+            return;
+        }
+
+
+        // Die gespeicherte Datei wird zur
+        // aktuellen Arbeitsdatei.
+        currentCsvFilePath =
+            finalFilePath;
+
+
+        // Aktive Datei anzeigen.
+        statusBar()->showMessage(
+            "Aktive Budget-Datei: " +
+            QFileInfo(currentCsvFilePath).fileName()
+        );
+
+
+        QMessageBox::information(
+            this,
+            "Budget-Datei gespeichert",
+            QString(
+                "%1 Buchungen wurden in\n%2\ngespeichert."
+            )
+            .arg(
+                budgetManager
+                .getAllTransactions()
+                .size()
+            )
+            .arg(
+                QFileInfo(
+                    currentCsvFilePath
+                ).fileName()
+            )
+        );
+    }
