@@ -58,6 +58,11 @@ private:
 
 	//--------------------------------------------------------------
 
+    // CSV
+    bool saveCurrentCsvFile();
+
+	//--------------------------------------------------------------
+
     // Aktualisierung der Darstellung
     void refreshTransactionTable(
         const QList<Transaction>& transactions)

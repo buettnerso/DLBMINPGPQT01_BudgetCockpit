@@ -86,6 +86,10 @@ void BudgetCockpit::refreshCategories()
 
 void BudgetCockpit::addTransaction()
 {
+    // --------------------------------------------------------
+    // 1. Eingaben aus der GUI lesen
+    // --------------------------------------------------------
+
     const QDate date =
         ui.dateTransaction->date();
 
@@ -102,6 +106,86 @@ void BudgetCockpit::addTransaction()
         ui.txtDescription->text().trimmed();
 
 
+    // --------------------------------------------------------
+    // 2. Eingaben prüfen
+    // --------------------------------------------------------
+
+    if (!date.isValid())
+    {
+        QMessageBox::warning(
+            this,
+            "Ungültige Eingabe",
+            "Bitte wählen Sie ein gültiges Datum aus."
+        );
+
+        return;
+    }
+
+
+    if (category.trimmed().isEmpty())
+    {
+        QMessageBox::warning(
+            this,
+            "Ungültige Eingabe",
+            "Bitte wählen Sie eine Kategorie aus."
+        );
+
+        return;
+    }
+
+
+    if (amount <= 0.0)
+    {
+        QMessageBox::warning(
+            this,
+            "Ungültige Eingabe",
+            "Bitte geben Sie einen Betrag größer als 0,00 € ein."
+        );
+
+        return;
+    }
+
+
+    // --------------------------------------------------------
+    // 3. Falls noch keine CSV aktiv ist:
+    //    Speicherort vom Nutzer auswählen lassen
+    // --------------------------------------------------------
+
+    if (currentCsvFilePath.isEmpty())
+    {
+        QString filePath =
+            QFileDialog::getSaveFileName(
+                this,
+                "Budget-Datei erstellen",
+                QString(),
+                "CSV-Dateien (*.csv);;Alle Dateien (*.*)"
+            );
+
+
+        // Nutzer hat Abbrechen gewählt.
+        if (filePath.isEmpty())
+        {
+            return;
+        }
+
+
+        if (!filePath.endsWith(
+            ".csv",
+            Qt::CaseInsensitive))
+        {
+            filePath += ".csv";
+        }
+
+
+        currentCsvFilePath =
+            filePath;
+    }
+
+
+    // --------------------------------------------------------
+    // 4. Transaction erzeugen
+    // --------------------------------------------------------
+
     Transaction transaction(
         date,
         type,
@@ -111,7 +195,67 @@ void BudgetCockpit::addTransaction()
     );
 
 
-    budgetManager.addTransaction(transaction);
+    // --------------------------------------------------------
+    // 5. Buchung an BudgetManager übergeben
+    // --------------------------------------------------------
+
+    budgetManager.addTransaction(
+        transaction
+    );
+
+
+    // --------------------------------------------------------
+    // 6. Aktuelle Ansicht aktualisieren
+    // --------------------------------------------------------
+
+    displayedTransactions =
+        budgetManager.getAllTransactions();
+
+
+    refreshTransactionTable(
+        displayedTransactions
+    );
+
+
+    refreshStatistics(
+        displayedTransactions
+    );
+
+
+    // --------------------------------------------------------
+    // 7. Aktive CSV automatisch speichern
+    // --------------------------------------------------------
+
+    if (!saveCurrentCsvFile())
+    {
+        return;
+    }
+
+
+    // --------------------------------------------------------
+    // 8. Statusleiste aktualisieren
+    // --------------------------------------------------------
+
+    statusBar()->showMessage(
+        "Gespeichert in: " +
+        QFileInfo(
+            currentCsvFilePath
+        ).fileName(),
+        4000
+    );
+
+
+    // --------------------------------------------------------
+    // 9. Eingabefelder zurücksetzen
+    // --------------------------------------------------------
+
+    ui.spnAmount->setValue(0.0);
+
+    ui.txtDescription->clear();
+
+    ui.dateTransaction->setDate(
+        QDate::currentDate()
+    );
 }
 
 
@@ -230,98 +374,123 @@ void BudgetCockpit::openCsvFile()
     );
 }
 
-	//--------------------------------------------------------------
-	// CSV Speichern
-	//--------------------------------------------------------------    
+//--------------------------------------------------------------
+// CSV Speichern unter ...
+//--------------------------------------------------------------
 
+void BudgetCockpit::saveCsvFile()
+{
+    QString suggestedPath =
+        currentCsvFilePath;
 
-    void BudgetCockpit::saveCsvFile()
-    {
-        QString suggestedPath =
-            currentCsvFilePath;
-
-
-        const QString filePath =
-            QFileDialog::getSaveFileName(
-                this,
-                "Budget-Datei speichern",
-                suggestedPath,
-                "CSV-Dateien (*.csv);;Alle Dateien (*.*)"
-            );
-
-
-        // Nutzer hat Abbrechen gewählt.
-        if (filePath.isEmpty())
-        {
-            return;
-        }
-
-
-        QString finalFilePath =
-            filePath;
-
-
-        // Falls keine Dateiendung angegeben wurde,
-        // automatisch .csv ergänzen.
-        if (!finalFilePath.endsWith(
-            ".csv",
-            Qt::CaseInsensitive))
-        {
-            finalFilePath += ".csv";
-        }
-
-
-        QString errorMessage;
-
-
-        const bool success =
-            csvRepository.save(
-                finalFilePath,
-                budgetManager.getAllTransactions(),
-                &errorMessage
-            );
-
-
-        if (!success)
-        {
-            QMessageBox::critical(
-                this,
-                "Budget-Datei konnte nicht gespeichert werden",
-                errorMessage
-            );
-
-            return;
-        }
-
-
-        // Die gespeicherte Datei wird zur
-        // aktuellen Arbeitsdatei.
-        currentCsvFilePath =
-            finalFilePath;
-
-
-        // Aktive Datei anzeigen.
-        statusBar()->showMessage(
-            "Aktive Budget-Datei: " +
-            QFileInfo(currentCsvFilePath).fileName()
-        );
-
-
-        QMessageBox::information(
+    const QString filePath =
+        QFileDialog::getSaveFileName(
             this,
-            "Budget-Datei gespeichert",
-            QString(
-                "%1 Buchungen wurden in\n%2\ngespeichert."
-            )
-            .arg(
-                budgetManager
-                .getAllTransactions()
-                .size()
-            )
-            .arg(
-                QFileInfo(
-                    currentCsvFilePath
-                ).fileName()
-            )
+            "Budget-Datei speichern",
+            suggestedPath,
+            "CSV-Dateien (*.csv);;Alle Dateien (*.*)"
         );
+
+    // Nutzer hat Abbrechen gewählt.
+    if (filePath.isEmpty())
+    {
+        return;
     }
+
+    QString finalFilePath =
+        filePath;
+
+    // Falls keine Dateiendung angegeben wurde,
+    // automatisch .csv ergänzen.
+    if (!finalFilePath.endsWith(
+        ".csv",
+        Qt::CaseInsensitive))
+    {
+        finalFilePath += ".csv";
+    }
+
+    QString errorMessage;
+
+    const bool success =
+        csvRepository.save(
+            finalFilePath,
+            budgetManager.getAllTransactions(),
+            &errorMessage
+        );
+
+    if (!success)
+    {
+        QMessageBox::critical(
+            this,
+            "Budget-Datei konnte nicht gespeichert werden",
+            errorMessage
+        );
+
+        return;
+    }
+
+    // Die gespeicherte Datei wird zur
+    // aktuellen Arbeitsdatei.
+    currentCsvFilePath =
+        finalFilePath;
+
+    // Aktive Datei anzeigen.
+    statusBar()->showMessage(
+        "Aktive Budget-Datei: " +
+        QFileInfo(currentCsvFilePath).fileName()
+    );
+
+    QMessageBox::information(
+        this,
+        "Budget-Datei gespeichert",
+        QString(
+            "%1 Buchungen wurden in\n%2\ngespeichert."
+        )
+        .arg(
+            budgetManager
+            .getAllTransactions()
+            .size()
+        )
+        .arg(
+            QFileInfo(
+                currentCsvFilePath
+            ).fileName()
+        )
+    );
+}
+
+
+//--------------------------------------------------------------
+// Aktuelle CSV automatisch speichern
+//--------------------------------------------------------------
+
+bool BudgetCockpit::saveCurrentCsvFile()
+{
+    // Ohne aktive CSV kann nicht gespeichert werden.
+    if (currentCsvFilePath.isEmpty())
+    {
+        return false;
+    }
+
+    QString errorMessage;
+
+    const bool success =
+        csvRepository.save(
+            currentCsvFilePath,
+            budgetManager.getAllTransactions(),
+            &errorMessage
+        );
+
+    if (!success)
+    {
+        QMessageBox::critical(
+            this,
+            "Speichern fehlgeschlagen",
+            errorMessage
+        );
+
+        return false;
+    }
+
+    return true;
+}
