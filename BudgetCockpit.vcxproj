@@ -114,6 +114,7 @@
   <ItemGroup>
     <ClCompile Include="BudgetManager.cpp" />
     <ClCompile Include="CategoryManager.cpp" />
+    <ClCompile Include="CsvRepository.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -121,6 +122,7 @@
     <ClCompile Include="Transaction.cpp" />
     <ClInclude Include="BudgetManager.h" />
     <ClInclude Include="CategoryManager.h" />
+    <ClInclude Include="CsvRepository.h" />
     <ClInclude Include="Transaction.h" />
     <QtRcc Include="BudgetCockpit.qrc" />
     <QtMoc Include="BudgetCockpit.h" />

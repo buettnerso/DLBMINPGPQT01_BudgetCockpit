@@ -7,6 +7,7 @@
 #include "BudgetManager.h"
 #include "CategoryManager.h"
 #include "Transaction.h"
+#include "CsvRepository.h"
 
 class BudgetCockpit : public QMainWindow
 {
@@ -27,9 +28,15 @@ private slots:
 private:
     Ui::BudgetCockpitClass ui;
 
-    // Geschäftslogik
+    // GeschäftslogikB
     BudgetManager budgetManager;
     CategoryManager categoryManager;
+
+    // CSV-Persistenz
+    CsvRepository csvRepository;
+
+    // Aktuell geöffnete Budget-Datei
+    QString currentCsvFilePath;
 
     // Aktuell in der Tabelle dargestellte Buchungen
     QList<Transaction> displayedTransactions;

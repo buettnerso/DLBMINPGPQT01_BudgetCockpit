@@ -64,7 +64,34 @@ void BudgetCockpit::refreshCategories()
 // für Testzwecke vorübergehend implementiert
 
 void BudgetCockpit::addTransaction()
-{}
+{
+    const QDate date =
+        ui.dateTransaction->date();
+
+    const QString type =
+        ui.cmbTransactionType->currentText();
+
+    const QString category =
+        ui.cmbCategory->currentText();
+
+    const double amount =
+        ui.spnAmount->value();
+
+    const QString description =
+        ui.txtDescription->text().trimmed();
+
+
+    Transaction transaction(
+        date,
+        type,
+        category,
+        amount,
+        description
+    );
+
+
+    budgetManager.addTransaction(transaction);
+}
 
 
 void BudgetCockpit::applyFilter()
