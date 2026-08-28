@@ -21,6 +21,9 @@ private slots:
     // Neue Buchung erfassen
     void addTransaction();
 
+    // Buchung löschen
+    void deleteTransaction();
+
     // Filter
     void applyFilter();
     void resetFilter();
@@ -28,6 +31,7 @@ private slots:
     // CSV-Datei öffnen
     void openCsvFile();
 	void saveCsvFile();
+
 
 private:
     Ui::BudgetCockpitClass ui;

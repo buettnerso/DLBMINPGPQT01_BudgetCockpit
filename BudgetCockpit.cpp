@@ -8,6 +8,8 @@
 #include <QHeaderView>
 #include <QLocale>
 
+#include <optional>
+
 BudgetCockpit::BudgetCockpit(QWidget* parent)
     : QMainWindow(parent)
 {
@@ -21,6 +23,13 @@ BudgetCockpit::BudgetCockpit(QWidget* parent)
         &QPushButton::clicked,
         this,
         &BudgetCockpit::addTransaction
+    );
+
+    connect(
+        ui.btnDeleteTransaction,
+        &QPushButton::clicked,
+        this,
+        &BudgetCockpit::deleteTransaction
     );
 
     connect(
@@ -50,6 +59,8 @@ BudgetCockpit::BudgetCockpit(QWidget* parent)
         this,
         &BudgetCockpit::saveCsvFile
     );
+
+   
 }
 
 
@@ -60,6 +71,14 @@ void BudgetCockpit::initializeGui()
 {
     // Aktuelles Datum für neue Buchungen setzen
     ui.dateTransaction->setDate(QDate::currentDate());
+    
+    ui.spnFilterAmountFrom->setSpecialValueText(
+        "offen"
+    );
+
+    ui.spnFilterAmountTo->setSpecialValueText(
+        "offen"
+    );
 
     // Kategorien aus dem CategoryManager laden
     refreshCategories();
@@ -148,7 +167,7 @@ void BudgetCockpit::addTransaction()
 
     // --------------------------------------------------------
     // 3. Falls noch keine CSV aktiv ist:
-    //    Speicherort vom Nutzer auswählen lassen
+    //    Speicherort auswählen
     // --------------------------------------------------------
 
     if (currentCsvFilePath.isEmpty())
@@ -162,7 +181,6 @@ void BudgetCockpit::addTransaction()
             );
 
 
-        // Nutzer hat Abbrechen gewählt.
         if (filePath.isEmpty())
         {
             return;
@@ -183,7 +201,7 @@ void BudgetCockpit::addTransaction()
 
 
     // --------------------------------------------------------
-    // 4. Transaction erzeugen
+    // 4. Neue Transaction erzeugen
     // --------------------------------------------------------
 
     Transaction transaction(
@@ -196,7 +214,7 @@ void BudgetCockpit::addTransaction()
 
 
     // --------------------------------------------------------
-    // 5. Buchung an BudgetManager übergeben
+    // 5. Buchung im BudgetManager speichern
     // --------------------------------------------------------
 
     budgetManager.addTransaction(
@@ -233,7 +251,7 @@ void BudgetCockpit::addTransaction()
 
 
     // --------------------------------------------------------
-    // 8. Statusleiste aktualisieren
+    // 8. Aktive Datei in Statusleiste anzeigen
     // --------------------------------------------------------
 
     statusBar()->showMessage(
@@ -259,12 +277,437 @@ void BudgetCockpit::addTransaction()
 }
 
 
+void BudgetCockpit::deleteTransaction()
+{
+    // --------------------------------------------------------
+    // 1. Ausgewählte Tabellenzeile ermitteln
+    // --------------------------------------------------------
+
+    const int selectedRow =
+        ui.tblTransactions->currentRow();
+
+
+    if (selectedRow < 0 ||
+        selectedRow >= displayedTransactions.size())
+    {
+        QMessageBox::warning(
+            this,
+            "Keine Buchung ausgewählt",
+            "Bitte wählen Sie zuerst eine Buchung in der Tabelle aus."
+        );
+
+        return;
+    }
+
+
+    // --------------------------------------------------------
+    // 2. Ausgewählte Buchung aus der aktuellen Ansicht holen
+    // --------------------------------------------------------
+
+    const Transaction selectedTransaction =
+        displayedTransactions.at(selectedRow);
+
+
+    // --------------------------------------------------------
+    // 3. Sicherheitsabfrage
+    // --------------------------------------------------------
+
+    const QMessageBox::StandardButton answer =
+        QMessageBox::question(
+            this,
+            "Buchung löschen",
+            QString(
+                "Möchten Sie diese Buchung wirklich löschen?\n\n"
+                "%1 | %2 | %3 | %4 €\n%5"
+            )
+            .arg(
+                selectedTransaction
+                .getDate()
+                .toString("dd.MM.yyyy")
+            )
+            .arg(
+                selectedTransaction.getType()
+            )
+            .arg(
+                selectedTransaction.getCategory()
+            )
+            .arg(
+                QString::number(
+                    selectedTransaction.getAmount(),
+                    'f',
+                    2
+                )
+            )
+            .arg(
+                selectedTransaction.getDescription()
+            ),
+            QMessageBox::Yes |
+            QMessageBox::No,
+            QMessageBox::No
+        );
+
+
+    if (answer != QMessageBox::Yes)
+    {
+        return;
+    }
+
+
+    // --------------------------------------------------------
+    // 4. Passende Buchung im vollständigen Datenbestand suchen
+    // --------------------------------------------------------
+
+    const QList<Transaction>& allTransactions =
+        budgetManager.getAllTransactions();
+
+    int managerIndex = -1;
+
+
+    for (int i = 0;
+        i < allTransactions.size();
+        ++i)
+    {
+        const Transaction& transaction =
+            allTransactions.at(i);
+
+
+        const bool sameTransaction =
+            transaction.getDate()
+            == selectedTransaction.getDate()
+            &&
+            transaction.getType()
+            == selectedTransaction.getType()
+            &&
+            transaction.getCategory()
+            == selectedTransaction.getCategory()
+            &&
+            transaction.getAmount()
+            == selectedTransaction.getAmount()
+            &&
+            transaction.getDescription()
+            == selectedTransaction.getDescription();
+
+
+        if (sameTransaction)
+        {
+            managerIndex = i;
+            break;
+        }
+    }
+
+
+    if (managerIndex < 0)
+    {
+        QMessageBox::critical(
+            this,
+            "Löschen fehlgeschlagen",
+            "Die ausgewählte Buchung konnte im Datenbestand nicht gefunden werden."
+        );
+
+        return;
+    }
+
+
+    // --------------------------------------------------------
+    // 5. Buchung aus dem BudgetManager entfernen
+    // --------------------------------------------------------
+
+    if (!budgetManager.removeTransaction(
+        managerIndex))
+    {
+        QMessageBox::critical(
+            this,
+            "Löschen fehlgeschlagen",
+            "Die Buchung konnte nicht gelöscht werden."
+        );
+
+        return;
+    }
+
+
+    // --------------------------------------------------------
+    // 6. Aktuelle CSV automatisch aktualisieren
+    // --------------------------------------------------------
+
+    if (!currentCsvFilePath.isEmpty())
+    {
+        if (!saveCurrentCsvFile())
+        {
+            return;
+        }
+    }
+
+
+    // --------------------------------------------------------
+    // 7. GUI aktualisieren
+    // --------------------------------------------------------
+
+    displayedTransactions =
+        budgetManager.getAllTransactions();
+
+
+    refreshTransactionTable(
+        displayedTransactions
+    );
+
+
+    refreshStatistics(
+        displayedTransactions
+    );
+
+
+    // --------------------------------------------------------
+    // 8. Rückmeldung
+    // --------------------------------------------------------
+
+    statusBar()->showMessage(
+        "Buchung gelöscht und gespeichert.",
+        4000
+    );
+}
+
+
 void BudgetCockpit::applyFilter()
-{}
+{
+    // --------------------------------------------------------
+    // 1. Kategorie auslesen
+    // --------------------------------------------------------
+
+    QString category =
+        ui.cmbFilterCategory->currentText();
+
+    if (category == "Alle Kategorien")
+    {
+        category.clear();
+    }
+
+
+    // --------------------------------------------------------
+    // 2. Typ auslesen
+    // --------------------------------------------------------
+
+    QString type =
+        ui.cmbFilterType->currentText();
+
+    if (type == "Alle")
+    {
+        type.clear();
+    }
+
+
+    // --------------------------------------------------------
+    // 3. Zeitraum auslesen
+    // --------------------------------------------------------
+
+    const QDate fromDate =
+        ui.dateFilterFrom->date();
+
+    const QDate toDate =
+        ui.dateFilterTo->date();
+
+
+    if (fromDate > toDate)
+    {
+        QMessageBox::warning(
+            this,
+            "Ungültiger Zeitraum",
+            "Das Startdatum darf nicht nach dem Enddatum liegen."
+        );
+
+        return;
+    }
+
+
+    // --------------------------------------------------------
+    // 4. Betragsgrenzen auslesen
+    // --------------------------------------------------------
+
+    std::optional<double> minAmount;
+    std::optional<double> maxAmount;
+
+
+    const double minValue =
+        ui.spnFilterAmountFrom->value();
+
+    const double maxValue =
+        ui.spnFilterAmountTo->value();
+
+
+    // 0,00 bedeutet:
+    // Für diese Seite ist keine Betragsgrenze gesetzt.
+    if (minValue > 0.0)
+    {
+        minAmount = minValue;
+    }
+
+    if (maxValue > 0.0)
+    {
+        maxAmount = maxValue;
+    }
+
+
+    if (minAmount.has_value()
+        && maxAmount.has_value()
+        && minAmount.value() > maxAmount.value())
+    {
+        QMessageBox::warning(
+            this,
+            "Ungültiger Betrag",
+            "Der Mindestbetrag darf nicht größer als der Höchstbetrag sein."
+        );
+
+        return;
+    }
+
+
+    // --------------------------------------------------------
+    // 5. Filter über BudgetManager anwenden
+    // --------------------------------------------------------
+
+    displayedTransactions =
+        budgetManager.filterTransactions(
+            category,
+            type,
+            fromDate,
+            toDate,
+            minAmount,
+            maxAmount
+        );
+
+
+    // --------------------------------------------------------
+    // 6. Tabelle aktualisieren
+    // --------------------------------------------------------
+
+    refreshTransactionTable(
+        displayedTransactions
+    );
+
+
+    // --------------------------------------------------------
+    // 7. Kennzahlen für die gefilterten Daten aktualisieren
+    // --------------------------------------------------------
+
+    refreshStatistics(
+        displayedTransactions
+    );
+
+
+    // --------------------------------------------------------
+    // 8. Status anzeigen
+    // --------------------------------------------------------
+
+    statusBar()->showMessage(
+        QString(
+            "Filter angewendet: %1 Buchungen"
+        )
+        .arg(displayedTransactions.size()),
+        4000
+    );
+}
 
 
 void BudgetCockpit::resetFilter()
-{}
+{
+    // --------------------------------------------------------
+    // 1. Kategorie zurücksetzen
+    // --------------------------------------------------------
+
+    ui.cmbFilterCategory->setCurrentIndex(0);
+
+
+    // --------------------------------------------------------
+    // 2. Typ zurücksetzen
+    // --------------------------------------------------------
+
+    ui.cmbFilterType->setCurrentIndex(0);
+
+
+    // --------------------------------------------------------
+    // 3. Betragsfilter zurücksetzen
+    // --------------------------------------------------------
+
+    ui.spnFilterAmountFrom->setValue(0.0);
+    ui.spnFilterAmountTo->setValue(0.0);
+
+
+    // --------------------------------------------------------
+    // 4. Datumsbereich auf gesamten Datenbestand setzen
+    // --------------------------------------------------------
+
+    const QList<Transaction>& allTransactions =
+        budgetManager.getAllTransactions();
+
+
+    if (!allTransactions.isEmpty())
+    {
+        QDate earliestDate =
+            allTransactions.first().getDate();
+
+        QDate latestDate =
+            allTransactions.first().getDate();
+
+
+        for (const Transaction& transaction :
+            allTransactions)
+        {
+            if (transaction.getDate() < earliestDate)
+            {
+                earliestDate =
+                    transaction.getDate();
+            }
+
+            if (transaction.getDate() > latestDate)
+            {
+                latestDate =
+                    transaction.getDate();
+            }
+        }
+
+
+        ui.dateFilterFrom->setDate(
+            earliestDate
+        );
+
+        ui.dateFilterTo->setDate(
+            latestDate
+        );
+    }
+    else
+    {
+        ui.dateFilterFrom->setDate(
+            QDate::currentDate()
+        );
+
+        ui.dateFilterTo->setDate(
+            QDate::currentDate()
+        );
+    }
+
+
+    // --------------------------------------------------------
+    // 5. Wieder alle Buchungen anzeigen
+    // --------------------------------------------------------
+
+    displayedTransactions =
+        allTransactions;
+
+
+    refreshTransactionTable(
+        displayedTransactions
+    );
+
+
+    refreshStatistics(
+        displayedTransactions
+    );
+
+
+    statusBar()->showMessage(
+        "Filter zurückgesetzt.",
+        3000
+    );
+}
 
 //--------------------------------------------------------------
 // CSV FUnktionen
@@ -342,17 +785,9 @@ void BudgetCockpit::openCsvFile()
     // Kategorie-ComboBoxen aktualisieren.
     refreshCategories();
 
-
-    // Tabelle aktualisieren.
-    refreshTransactionTable(
-        displayedTransactions
-    );
-
-
-    // Kennzahlen aktualisieren.
-    refreshStatistics(
-        displayedTransactions
-    );
+    // Filter und Ansicht auf den neu geladenen
+    // Datenbestand zurücksetzen.
+    resetFilter();
 
 
     // Aktuell aktive Datei in der Statusleiste anzeigen.
