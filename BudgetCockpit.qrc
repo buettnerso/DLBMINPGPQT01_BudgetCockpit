@@ -1,4 +1,5 @@
 <RCC>
-    <qresource prefix="BudgetCockpit">
+    <qresource prefix="/BudgetCockpit">
+        <file>BudgetCockpit.png</file>
     </qresource>
 </RCC>

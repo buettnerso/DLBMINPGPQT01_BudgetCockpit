@@ -1,0 +1,943 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>BudgetCockpitClass</class>
+ <widget class="QMainWindow" name="BudgetCockpitClass">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1766</width>
+    <height>978</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>1000</width>
+    <height>700</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>Budget-Cockpit</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QVBoxLayout" name="mainLayout">
+    <property name="spacing">
+     <number>10</number>
+    </property>
+    <property name="leftMargin">
+     <number>14</number>
+    </property>
+    <property name="topMargin">
+     <number>12</number>
+    </property>
+    <property name="rightMargin">
+     <number>14</number>
+    </property>
+    <property name="bottomMargin">
+     <number>10</number>
+    </property>
+    <item>
+     <layout class="QHBoxLayout" name="headerLayout">
+      <item>
+       <widget class="QLabel" name="lblAppTitle">
+        <property name="font">
+         <font>
+          <pointsize>18</pointsize>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Budget-Cockpit</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QLabel" name="lblAppType">
+        <property name="text">
+         <string>Qt/C++ Desktop-App</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="QTabWidget" name="tabMain">
+      <property name="currentIndex">
+       <number>1</number>
+      </property>
+      <widget class="QWidget" name="tabTransactions">
+       <attribute name="title">
+        <string>Buchungen</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="transactionsLayout">
+        <property name="spacing">
+         <number>10</number>
+        </property>
+        <item>
+         <widget class="QGroupBox" name="grpNewTransaction">
+          <property name="title">
+           <string>1. Neue Buchung erfassen</string>
+          </property>
+          <layout class="QGridLayout" name="newTransactionLayout">
+           <property name="horizontalSpacing">
+            <number>10</number>
+           </property>
+           <property name="verticalSpacing">
+            <number>6</number>
+           </property>
+           <item row="0" column="0">
+            <widget class="QLabel" name="lblTransactionDate">
+             <property name="text">
+              <string>Datum</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLabel" name="lblTransactionType">
+             <property name="text">
+              <string>Art</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="2">
+            <widget class="QLabel" name="lblCategory">
+             <property name="text">
+              <string>Kategorie</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="3">
+            <widget class="QLabel" name="lblAmount">
+             <property name="text">
+              <string>Betrag</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="4">
+            <widget class="QLabel" name="lblDescription">
+             <property name="text">
+              <string>Beschreibung</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QDateEdit" name="dateTransaction">
+             <property name="displayFormat">
+              <string>dd.MM.yyyy</string>
+             </property>
+             <property name="calendarPopup">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QComboBox" name="cmbTransactionType">
+             <item>
+              <property name="text">
+               <string>Ausgabe</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Einnahme</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="1" column="2">
+            <widget class="QComboBox" name="cmbCategory">
+             <property name="minimumSize">
+              <size>
+               <width>150</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="editable">
+              <bool>true</bool>
+             </property>
+             <property name="maxVisibleItems">
+              <number>30</number>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="3">
+            <widget class="QDoubleSpinBox" name="spnAmount">
+             <property name="suffix">
+              <string> €</string>
+             </property>
+             <property name="decimals">
+              <number>2</number>
+             </property>
+             <property name="maximum">
+              <double>999999.989999999990687</double>
+             </property>
+             <property name="singleStep">
+              <double>1.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="4">
+            <widget class="QLineEdit" name="txtDescription">
+             <property name="maxLength">
+              <number>100</number>
+             </property>
+             <property name="placeholderText">
+              <string>z. B. Einkauf REWE</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="5">
+            <widget class="QPushButton" name="btnAddTransaction">
+             <property name="minimumSize">
+              <size>
+               <width>125</width>
+               <height>32</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>+ Hinzufügen</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="grpFilter">
+          <property name="title">
+           <string>2. Filterbereich</string>
+          </property>
+          <layout class="QGridLayout" name="filterGridLayout">
+           <property name="horizontalSpacing">
+            <number>10</number>
+           </property>
+           <property name="verticalSpacing">
+            <number>6</number>
+           </property>
+           <item row="1" column="3">
+            <widget class="QDoubleSpinBox" name="spnFilterAmountTo">
+             <property name="suffix">
+              <string> €</string>
+             </property>
+             <property name="decimals">
+              <number>2</number>
+             </property>
+             <property name="maximum">
+              <double>999999.989999999990687</double>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="5">
+            <widget class="QComboBox" name="cmbFilterType">
+             <item>
+              <property name="text">
+               <string>Alle</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Einnahme</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Ausgabe</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="0" column="3">
+            <widget class="QLabel" name="lblFilterAmountTo">
+             <property name="text">
+              <string>Betrag bis</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QDateEdit" name="dateFilterFrom">
+             <property name="displayFormat">
+              <string>dd.MM.yyyy</string>
+             </property>
+             <property name="calendarPopup">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="5">
+            <widget class="QLabel" name="lblFilterType">
+             <property name="text">
+              <string>Art</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QDateEdit" name="dateFilterTo">
+             <property name="displayFormat">
+              <string>dd.MM.yyyy</string>
+             </property>
+             <property name="calendarPopup">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="2">
+            <widget class="QDoubleSpinBox" name="spnFilterAmountFrom">
+             <property name="suffix">
+              <string> €</string>
+             </property>
+             <property name="decimals">
+              <number>2</number>
+             </property>
+             <property name="maximum">
+              <double>999999.989999999990687</double>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLabel" name="lblFilterDateTo">
+             <property name="text">
+              <string>Zeitraum bis</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="4">
+            <widget class="QLabel" name="lblFilterCategory">
+             <property name="text">
+              <string>Kategorie</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="4">
+            <widget class="QComboBox" name="cmbFilterCategory">
+             <property name="maxVisibleItems">
+              <number>30</number>
+             </property>
+             <item>
+              <property name="text">
+               <string>Alle Kategorien</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="0" column="2">
+            <widget class="QLabel" name="lblFilterAmountFrom">
+             <property name="text">
+              <string>Betrag von</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="lblFilterDateFrom">
+             <property name="text">
+              <string>Zeitraum von</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="6">
+            <widget class="QPushButton" name="btnApplyFilter">
+             <property name="minimumSize">
+              <size>
+               <width>145</width>
+               <height>30</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Filter anwenden</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="contentLayout">
+          <item>
+           <widget class="QGroupBox" name="grpTransactions">
+            <property name="title">
+             <string>3. Tabellenansicht</string>
+            </property>
+            <layout class="QVBoxLayout" name="transactionsTableLayout">
+             <item>
+              <widget class="QTableWidget" name="tblTransactions">
+               <property name="editTriggers">
+                <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
+               </property>
+               <property name="alternatingRowColors">
+                <bool>true</bool>
+               </property>
+               <property name="selectionMode">
+                <enum>QAbstractItemView::SelectionMode::SingleSelection</enum>
+               </property>
+               <property name="selectionBehavior">
+                <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
+               </property>
+               <property name="columnCount">
+                <number>5</number>
+               </property>
+               <column>
+                <property name="text">
+                 <string>Datum</string>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>Art</string>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>Kategorie</string>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>Betrag</string>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>Beschreibung</string>
+                </property>
+               </column>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QGroupBox" name="grpActions">
+            <property name="minimumSize">
+             <size>
+              <width>190</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="title">
+             <string>Aktionen</string>
+            </property>
+            <layout class="QVBoxLayout" name="actionsLayout">
+             <item>
+              <widget class="QPushButton" name="btnResetFilter">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>34</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Filter zurücksetzen</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="btnSaveCsv">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>34</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>CSV speichern</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="btnLoadCsv">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>34</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>CSV laden</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="btnDeleteTransaction">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>36</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Ausgewählte Buchung löschen</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="verticalSpacerActions">
+               <property name="orientation">
+                <enum>Qt::Orientation::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="grpStatistics">
+          <property name="title">
+           <string>4. Kennzahlenbereich</string>
+          </property>
+          <layout class="QHBoxLayout" name="statisticsLayout">
+           <property name="spacing">
+            <number>12</number>
+           </property>
+           <item>
+            <widget class="QFrame" name="frameIncome">
+             <property name="frameShape">
+              <enum>QFrame::Shape::StyledPanel</enum>
+             </property>
+             <layout class="QVBoxLayout" name="incomeLayout">
+              <item>
+               <widget class="QLabel" name="lblIncomeTitle">
+                <property name="text">
+                 <string>Einnahmen</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="lblIncomeValue">
+                <property name="font">
+                 <font>
+                  <pointsize>14</pointsize>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>0,00 €</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QFrame" name="frameExpenses">
+             <property name="frameShape">
+              <enum>QFrame::Shape::StyledPanel</enum>
+             </property>
+             <layout class="QVBoxLayout" name="expensesLayout">
+              <item>
+               <widget class="QLabel" name="lblExpenseTitle">
+                <property name="text">
+                 <string>Ausgaben</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="lblExpenseValue">
+                <property name="font">
+                 <font>
+                  <pointsize>14</pointsize>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>0,00 €</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QFrame" name="frameBalance">
+             <property name="frameShape">
+              <enum>QFrame::Shape::StyledPanel</enum>
+             </property>
+             <layout class="QVBoxLayout" name="balanceLayout">
+              <item>
+               <widget class="QLabel" name="lblBalanceTitle">
+                <property name="text">
+                 <string>Saldo</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="lblBalanceValue">
+                <property name="font">
+                 <font>
+                  <pointsize>14</pointsize>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>0,00 €</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QFrame" name="frameCurrentView">
+             <property name="frameShape">
+              <enum>QFrame::Shape::StyledPanel</enum>
+             </property>
+             <layout class="QVBoxLayout" name="currentViewLayout">
+              <item>
+               <widget class="QLabel" name="lblCurrentViewTitle">
+                <property name="text">
+                 <string>Ansicht</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="lblCurrentView">
+                <property name="font">
+                 <font>
+                  <pointsize>12</pointsize>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>Alle Buchungen</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabAnalysis">
+       <attribute name="title">
+        <string>Auswertung</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="analysisLayout">
+        <property name="spacing">
+         <number>12</number>
+        </property>
+        <item>
+         <widget class="QGroupBox" name="grpAnalysisFilter">
+          <property name="title">
+           <string>Ansicht filtern</string>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_2">
+           <item row="0" column="0">
+            <layout class="QGridLayout" name="gridLayout">
+             <item row="0" column="0">
+              <widget class="QLabel" name="lblAnalysisDateFrom">
+               <property name="text">
+                <string>Zeitraum von</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QLabel" name="lblAnalysisDateTo">
+               <property name="text">
+                <string>Zeitraum bis</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="2">
+              <widget class="QLabel" name="lblAnalysisAmountFrom">
+               <property name="text">
+                <string>Betrag von</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="3">
+              <widget class="QLabel" name="lblAnalysisAmountTo">
+               <property name="text">
+                <string>Betrag bis</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="4">
+              <widget class="QLabel" name="lblAnalysisCategory">
+               <property name="text">
+                <string>Kategorie</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="5">
+              <widget class="QLabel" name="lblAnalysisType">
+               <property name="text">
+                <string>Art</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QDateEdit" name="dateAnalysisFrom">
+               <property name="displayFormat">
+                <string>dd.MM.yyyy</string>
+               </property>
+               <property name="calendarPopup">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QDateEdit" name="dateAnalysisTo">
+               <property name="displayFormat">
+                <string>dd.MM.yyyy</string>
+               </property>
+               <property name="calendarPopup">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="2">
+              <widget class="QDoubleSpinBox" name="spnAnalysisAmountFrom">
+               <property name="suffix">
+                <string> €</string>
+               </property>
+               <property name="decimals">
+                <number>2</number>
+               </property>
+               <property name="maximum">
+                <double>999999.989999999990687</double>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="3">
+              <widget class="QDoubleSpinBox" name="spnAnalysisAmountTo">
+               <property name="suffix">
+                <string> €</string>
+               </property>
+               <property name="decimals">
+                <number>2</number>
+               </property>
+               <property name="maximum">
+                <double>999999.989999999990687</double>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="4">
+              <widget class="QComboBox" name="cmbAnalysisCategory">
+               <property name="maxVisibleItems">
+                <number>30</number>
+               </property>
+               <item>
+                <property name="text">
+                 <string>Alle Kategorien</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item row="1" column="5">
+              <widget class="QComboBox" name="cmbAnalysisType">
+               <item>
+                <property name="text">
+                 <string>Alle</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Einnahme</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Ausgabe</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item row="1" column="6">
+              <widget class="QPushButton" name="btnApplyAnalysisFilter">
+               <property name="minimumSize">
+                <size>
+                 <width>145</width>
+                 <height>26</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Filter anwenden</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="6">
+              <widget class="QPushButton" name="btnResetAnalysisFilter">
+               <property name="text">
+                <string>Filter zurücksetzen</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="lblAnalysisTitle">
+          <property name="font">
+           <font>
+            <pointsize>16</pointsize>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Ausgaben nach Kategorie</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignmentFlag::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="lblAnalysisPeriod">
+          <property name="text">
+           <string>Aktuelle Filterauswahl</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignmentFlag::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QFrame" name="chartContainer">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>420</height>
+           </size>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::Shape::StyledPanel</enum>
+          </property>
+          <layout class="QVBoxLayout" name="chartContainerLayout">
+           <item>
+            <widget class="QLabel" name="lblChartPlaceholder">
+             <property name="text">
+              <string>Hier wird später das Tortendiagramm angezeigt.</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignmentFlag::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="footerLayout">
+      <item>
+       <spacer name="footerSpacer">
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QLabel" name="lblVersion">
+        <property name="text">
+         <string>Version v1.0</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1766</width>
+     <height>33</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QToolBar" name="mainToolBar">
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+ </widget>
+ <tabstops>
+  <tabstop>dateTransaction</tabstop>
+  <tabstop>cmbTransactionType</tabstop>
+  <tabstop>cmbCategory</tabstop>
+  <tabstop>spnAmount</tabstop>
+  <tabstop>txtDescription</tabstop>
+  <tabstop>btnAddTransaction</tabstop>
+  <tabstop>dateFilterFrom</tabstop>
+  <tabstop>dateFilterTo</tabstop>
+  <tabstop>spnFilterAmountFrom</tabstop>
+  <tabstop>spnFilterAmountTo</tabstop>
+  <tabstop>cmbFilterCategory</tabstop>
+  <tabstop>cmbFilterType</tabstop>
+  <tabstop>btnApplyFilter</tabstop>
+  <tabstop>tblTransactions</tabstop>
+  <tabstop>btnSaveCsv</tabstop>
+  <tabstop>btnLoadCsv</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+</ui>
