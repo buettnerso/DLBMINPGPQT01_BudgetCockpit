@@ -8,6 +8,13 @@
 #include <QHeaderView>
 #include <QLocale>
 
+#include <QChart>
+#include <QChartView>
+#include <QPieSeries>
+#include <QPieSlice>
+#include <QLegend>
+#include <QPainter>
+
 #include <optional>
 
 BudgetCockpit::BudgetCockpit(QWidget* parent)
@@ -234,6 +241,245 @@ void BudgetCockpit::syncAnalysisFilterToBooking()
     );
 }
 
+//--------------------------------------------------------------
+// Kreisdiagramm der gefilterten Buchungen aktualisieren
+//--------------------------------------------------------------
+
+void BudgetCockpit::refreshAnalysisChart(
+    const QList<Transaction>& transactions)
+{
+    // --------------------------------------------------------
+    // 1. Vorheriges Diagramm entfernen
+    // --------------------------------------------------------
+
+    if (analysisChartView != nullptr)
+    {
+        ui.chartContainerLayout->removeWidget(
+            analysisChartView
+        );
+
+        delete analysisChartView;
+        analysisChartView = nullptr;
+    }
+
+
+    // --------------------------------------------------------
+    // 2. Überschrift passend zum Filter setzen
+    // --------------------------------------------------------
+
+    const QString selectedType =
+        ui.cmbFilterType->currentText();
+
+
+    if (selectedType == "Ausgabe")
+    {
+        ui.lblAnalysisTitle->setText(
+            "Ausgaben nach Kategorie"
+        );
+    }
+    else if (selectedType == "Einnahme")
+    {
+        ui.lblAnalysisTitle->setText(
+            "Einnahmen nach Kategorie"
+        );
+    }
+    else
+    {
+        ui.lblAnalysisTitle->setText(
+            "Verteilung nach Kategorie"
+        );
+    }
+
+
+    // --------------------------------------------------------
+    // 3. Aktuellen Zeitraum anzeigen
+    // --------------------------------------------------------
+
+    ui.lblAnalysisPeriod->setText(
+        QString(
+            "%1 bis %2 | %3 Buchungen"
+        )
+        .arg(
+            ui.dateFilterFrom
+            ->date()
+            .toString("dd.MM.yyyy")
+        )
+        .arg(
+            ui.dateFilterTo
+            ->date()
+            .toString("dd.MM.yyyy")
+        )
+        .arg(
+            transactions.size()
+        )
+    );
+
+
+    // --------------------------------------------------------
+    // 4. Keine Daten vorhanden
+    // --------------------------------------------------------
+
+    if (transactions.isEmpty())
+    {
+        ui.lblChartPlaceholder->setText(
+            "Für die aktuelle Filterauswahl "
+            "sind keine Buchungen vorhanden."
+        );
+
+        ui.lblChartPlaceholder->show();
+
+        return;
+    }
+
+
+    // --------------------------------------------------------
+    // 5. Beträge je Kategorie berechnen
+    // --------------------------------------------------------
+
+    const QMap<QString, double> categoryTotals =
+        budgetManager.calculateCategoryTotals(
+            transactions
+        );
+
+
+    // --------------------------------------------------------
+    // 6. Kreisdiagramm-Serie erzeugen
+    // --------------------------------------------------------
+
+    QPieSeries* series =
+        new QPieSeries();
+
+
+    for (auto it = categoryTotals.cbegin();
+        it != categoryTotals.cend();
+        ++it)
+    {
+        // Kategorien ohne positiven Betrag
+        // nicht als Segment darstellen.
+        if (it.value() <= 0.0)
+        {
+            continue;
+        }
+
+        series->append(
+            it.key(),
+            it.value()
+        );
+    }
+
+
+    // --------------------------------------------------------
+    // 7. Prüfen, ob darstellbare Daten vorhanden sind
+    // --------------------------------------------------------
+
+    if (series->isEmpty())
+    {
+        delete series;
+
+        ui.lblChartPlaceholder->setText(
+            "Für die aktuelle Filterauswahl "
+            "sind keine darstellbaren Werte vorhanden."
+        );
+
+        ui.lblChartPlaceholder->show();
+
+        return;
+    }
+
+
+    // --------------------------------------------------------
+    // 8. Prozentwerte an den Segmenten anzeigen
+    // --------------------------------------------------------
+
+    const QLocale germanLocale(
+        QLocale::German,
+        QLocale::Germany
+    );
+
+
+    for (QPieSlice* slice : series->slices())
+    {
+        const double percentage =
+            slice->percentage() * 100.0;
+
+        const QString category =
+            slice->label();
+
+
+        slice->setLabel(
+            QString(
+                "%1\n%2 %"
+            )
+            .arg(category)
+            .arg(
+                germanLocale.toString(
+                    percentage,
+                    'f',
+                    1
+                )
+            )
+        );
+
+
+        slice->setLabelVisible(true);
+
+        slice->setLabelPosition(
+            QPieSlice::LabelOutside
+        );
+    }
+
+
+    // --------------------------------------------------------
+    // 9. Diagramm erzeugen
+    // --------------------------------------------------------
+
+    QChart* chart =
+        new QChart();
+
+    chart->addSeries(
+        series
+    );
+
+
+    // Legende anzeigen
+    chart->legend()->setVisible(true);
+
+    chart->legend()->setAlignment(
+        Qt::AlignRight
+    );
+
+
+    // Dezente Animation beim Aktualisieren
+    chart->setAnimationOptions(
+        QChart::SeriesAnimations
+    );
+
+
+    // --------------------------------------------------------
+    // 10. ChartView erzeugen
+    // --------------------------------------------------------
+
+    analysisChartView =
+        new QChartView(
+            chart,
+            ui.chartContainer
+        );
+
+
+    analysisChartView->setRenderHint(
+        QPainter::Antialiasing
+    );
+
+
+    // Platzhalter ausblenden
+    ui.lblChartPlaceholder->hide();
+
+
+    // Diagramm in vorhandenes Layout einfügen
+    ui.chartContainerLayout->addWidget(
+        analysisChartView
+    );
+}
 
 void BudgetCockpit::addTransaction()
 {
@@ -720,6 +966,11 @@ void BudgetCockpit::applyFilter()
         displayedTransactions
     );
 
+	// Kreisdiagramm für die gefilterten Daten aktualisieren
+    refreshAnalysisChart(
+        displayedTransactions
+    );
+
 
     // Filter ist ab jetzt aktiv.
     filterActive = true;
@@ -837,6 +1088,11 @@ void BudgetCockpit::resetFilter()
 
 
     refreshStatistics(
+        displayedTransactions
+    );
+
+	// Kreisdiagramm für die gefilterten Daten aktualisieren
+    refreshAnalysisChart(
         displayedTransactions
     );
 

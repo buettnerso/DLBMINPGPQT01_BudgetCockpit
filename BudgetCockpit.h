@@ -9,6 +9,8 @@
 #include "Transaction.h"
 #include "CsvRepository.h"
 
+class QChartView;
+
 class BudgetCockpit : public QMainWindow
 {
     Q_OBJECT
@@ -54,6 +56,9 @@ private:
 
     // Aktuell in der Tabelle dargestellte Buchungen
     QList<Transaction> displayedTransactions;
+
+    // Aktuell dargestelltes Kreisdiagramm
+    QChartView* analysisChartView = nullptr;
 
     // Status der Filterung
     bool filterActive = false;
@@ -225,4 +230,9 @@ private:
     void syncBookingFilterToAnalysis();
 
     void syncAnalysisFilterToBooking();
+
+    // Auswertung aktualisieren
+    void refreshAnalysisChart(
+        const QList<Transaction>& transactions
+    );
 };
