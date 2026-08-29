@@ -32,6 +32,9 @@ BudgetCockpit::BudgetCockpit(QWidget* parent)
         &BudgetCockpit::deleteTransaction
     );
 
+    
+    // Filter im Reiter Buchungen
+
     connect(
         ui.btnApplyFilter,
         &QPushButton::clicked,
@@ -41,6 +44,26 @@ BudgetCockpit::BudgetCockpit(QWidget* parent)
 
     connect(
         ui.btnResetFilter,
+        &QPushButton::clicked,
+        this,
+        &BudgetCockpit::resetFilter
+    );
+           
+    // Filter im Reiter Auswertung
+
+    connect(
+        ui.btnApplyAnalysisFilter,
+        &QPushButton::clicked,
+        this,
+        [this]()
+        {
+            syncAnalysisFilterToBooking();
+            applyFilter();
+        }
+    );
+
+    connect(
+        ui.btnResetAnalysisFilter,
         &QPushButton::clicked,
         this,
         &BudgetCockpit::resetFilter
@@ -69,9 +92,16 @@ BudgetCockpit::~BudgetCockpit()
 
 void BudgetCockpit::initializeGui()
 {
-    // Aktuelles Datum für neue Buchungen setzen
-    ui.dateTransaction->setDate(QDate::currentDate());
-    
+    // Aktuelles Datum für neue Buchungen
+    ui.dateTransaction->setDate(
+        QDate::currentDate()
+    );
+
+
+    // --------------------------------------------------------
+    // Betragsfilter Buchungen
+    // --------------------------------------------------------
+
     ui.spnFilterAmountFrom->setSpecialValueText(
         "offen"
     );
@@ -80,23 +110,127 @@ void BudgetCockpit::initializeGui()
         "offen"
     );
 
-    // Kategorien aus dem CategoryManager laden
+
+    // --------------------------------------------------------
+    // Betragsfilter Auswertung
+    // --------------------------------------------------------
+
+    ui.spnAnalysisAmountFrom->setSpecialValueText(
+        "offen"
+    );
+
+    ui.spnAnalysisAmountTo->setSpecialValueText(
+        "offen"
+    );
+
+
+    // Kategorien laden
     refreshCategories();
+
+
+    // Auswertung übernimmt beim Start den Filterzustand aus Buchungen
+    syncBookingFilterToAnalysis();
 }
 
 void BudgetCockpit::refreshCategories()
 {
+    // --------------------------------------------------------
     // Kategorieauswahl für neue Buchungen
+    // --------------------------------------------------------
+
     ui.cmbCategory->clear();
+
     ui.cmbCategory->addItems(
         categoryManager.getCategories()
     );
 
-    // Kategorieauswahl für den Filter
+
+    // --------------------------------------------------------
+    // Kategorieauswahl für Filter im Reiter Buchungen
+    // --------------------------------------------------------
+
     ui.cmbFilterCategory->clear();
-    ui.cmbFilterCategory->addItem("Alle Kategorien");
+
+    ui.cmbFilterCategory->addItem(
+        "Alle Kategorien"
+    );
+
     ui.cmbFilterCategory->addItems(
         categoryManager.getCategories()
+    );
+
+
+    // --------------------------------------------------------
+    // Kategorieauswahl für Filter im Reiter Auswertung
+    // --------------------------------------------------------
+
+    ui.cmbAnalysisCategory->clear();
+
+    ui.cmbAnalysisCategory->addItem(
+        "Alle Kategorien"
+    );
+
+    ui.cmbAnalysisCategory->addItems(
+        categoryManager.getCategories()
+    );
+}
+
+//--------------------------------------------------------------
+// Filter zwischen Buchungen und Auswertung synchronisieren
+//--------------------------------------------------------------
+
+void BudgetCockpit::syncBookingFilterToAnalysis()
+{
+    ui.dateAnalysisFrom->setDate(
+        ui.dateFilterFrom->date()
+    );
+
+    ui.dateAnalysisTo->setDate(
+        ui.dateFilterTo->date()
+    );
+
+    ui.spnAnalysisAmountFrom->setValue(
+        ui.spnFilterAmountFrom->value()
+    );
+
+    ui.spnAnalysisAmountTo->setValue(
+        ui.spnFilterAmountTo->value()
+    );
+
+    ui.cmbAnalysisCategory->setCurrentText(
+        ui.cmbFilterCategory->currentText()
+    );
+
+    ui.cmbAnalysisType->setCurrentText(
+        ui.cmbFilterType->currentText()
+    );
+}
+
+
+void BudgetCockpit::syncAnalysisFilterToBooking()
+{
+    ui.dateFilterFrom->setDate(
+        ui.dateAnalysisFrom->date()
+    );
+
+    ui.dateFilterTo->setDate(
+        ui.dateAnalysisTo->date()
+    );
+
+    ui.spnFilterAmountFrom->setValue(
+        ui.spnAnalysisAmountFrom->value()
+    );
+
+    ui.spnFilterAmountTo->setValue(
+        ui.spnAnalysisAmountTo->value()
+    );
+
+    ui.cmbFilterCategory->setCurrentText(
+        ui.cmbAnalysisCategory->currentText()
+    );
+
+    ui.cmbFilterType->setCurrentText(
+        ui.cmbAnalysisType->currentText()
     );
 }
 
@@ -590,6 +724,9 @@ void BudgetCockpit::applyFilter()
     // Filter ist ab jetzt aktiv.
     filterActive = true;
 
+    // Aktiven Filter auch im Reiter Auswertung anzeigen.
+    syncBookingFilterToAnalysis();
+
 
     // --------------------------------------------------------
     // 8. Status anzeigen
@@ -702,6 +839,12 @@ void BudgetCockpit::resetFilter()
     refreshStatistics(
         displayedTransactions
     );
+
+    // --------------------------------------------------------
+    // 6. Zurückgesetzten Filter mit Auswertung synchronisieren
+    // --------------------------------------------------------
+
+    syncBookingFilterToAnalysis();
 
 
     statusBar()->showMessage(

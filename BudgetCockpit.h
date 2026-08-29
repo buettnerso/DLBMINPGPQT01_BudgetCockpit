@@ -220,4 +220,9 @@ private:
     }
 
     void refreshCategories();
+
+
+    void syncBookingFilterToAnalysis();
+
+    void syncAnalysisFilterToBooking();
 };
