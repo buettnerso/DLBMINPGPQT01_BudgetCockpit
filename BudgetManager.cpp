@@ -91,12 +91,30 @@ double BudgetManager::calculateExpenses(
     return expenses;
 }
 
-
+// Für Chart Darstellung: aufsummieren der Beträge auf Kategoriewert
 double BudgetManager::calculateBalance(
     const QList<Transaction>& transactionsToCalculate) const
 {
     return calculateIncome(transactionsToCalculate)
         - calculateExpenses(transactionsToCalculate);
+}
+
+QMap<QString, double> BudgetManager::calculateCategoryTotals(
+    const QList<Transaction>& transactionsToCalculate) const
+{
+    QMap<QString, double> categoryTotals;
+
+    for (const Transaction& transaction :
+        transactionsToCalculate)
+    {
+        const QString category =
+            transaction.getCategory();
+
+        categoryTotals[category] +=
+            transaction.getAmount();
+    }
+
+    return categoryTotals;
 }
 
 

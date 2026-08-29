@@ -3,6 +3,7 @@
 #include <QDate>
 #include <QList>
 #include <QString>
+#include <QMap>
 
 #include <optional>
 
@@ -43,6 +44,11 @@ public:
     ) const;
 
     double calculateBalance(
+        const QList<Transaction>& transactionsToCalculate
+    ) const;
+
+    // Summen der Buchungsbeträge pro Kategorie
+    QMap<QString, double> calculateCategoryTotals(
         const QList<Transaction>& transactionsToCalculate
     ) const;
 
