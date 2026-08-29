@@ -55,6 +55,9 @@ private:
     // Aktuell in der Tabelle dargestellte Buchungen
     QList<Transaction> displayedTransactions;
 
+    // Status der Filterung
+    bool filterActive = false;
+
     //--------------------------------------------------------------
 
     // Initialisierung der Oberfläche

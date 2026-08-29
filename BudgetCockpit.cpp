@@ -101,8 +101,6 @@ void BudgetCockpit::refreshCategories()
 }
 
 
-// für Testzwecke vorübergehend implementiert
-
 void BudgetCockpit::addTransaction()
 {
     // --------------------------------------------------------
@@ -223,25 +221,7 @@ void BudgetCockpit::addTransaction()
 
 
     // --------------------------------------------------------
-    // 6. Aktuelle Ansicht aktualisieren
-    // --------------------------------------------------------
-
-    displayedTransactions =
-        budgetManager.getAllTransactions();
-
-
-    refreshTransactionTable(
-        displayedTransactions
-    );
-
-
-    refreshStatistics(
-        displayedTransactions
-    );
-
-
-    // --------------------------------------------------------
-    // 7. Aktive CSV automatisch speichern
+    // 6. Aktive CSV automatisch speichern
     // --------------------------------------------------------
 
     if (!saveCurrentCsvFile())
@@ -251,7 +231,23 @@ void BudgetCockpit::addTransaction()
 
 
     // --------------------------------------------------------
-    // 8. Aktive Datei in Statusleiste anzeigen
+    // 7. Aktuelle Ansicht aktualisieren
+    // --------------------------------------------------------
+
+    if (filterActive)
+    {
+        // Bestehenden Filter beibehalten.
+        applyFilter();
+    }
+    else
+    {
+        // Ohne aktiven Filter alle Buchungen anzeigen.
+        resetFilter();
+    }
+
+
+    // --------------------------------------------------------
+    // 8. Statusleiste aktualisieren
     // --------------------------------------------------------
 
     statusBar()->showMessage(
@@ -442,18 +438,16 @@ void BudgetCockpit::deleteTransaction()
     // 7. GUI aktualisieren
     // --------------------------------------------------------
 
-    displayedTransactions =
-        budgetManager.getAllTransactions();
-
-
-    refreshTransactionTable(
-        displayedTransactions
-    );
-
-
-    refreshStatistics(
-        displayedTransactions
-    );
+    if (filterActive)
+    {
+        // Bestehenden Filter erneut anwenden.
+        applyFilter();
+    }
+    else
+    {
+        // Ohne aktiven Filter alle Buchungen anzeigen.
+        resetFilter();
+    }
 
 
     // --------------------------------------------------------
@@ -593,6 +587,10 @@ void BudgetCockpit::applyFilter()
     );
 
 
+    // Filter ist ab jetzt aktiv.
+    filterActive = true;
+
+
     // --------------------------------------------------------
     // 8. Status anzeigen
     // --------------------------------------------------------
@@ -609,6 +607,9 @@ void BudgetCockpit::applyFilter()
 
 void BudgetCockpit::resetFilter()
 {
+    // Filter ist ab jetzt deaktiviert.
+    filterActive = false;
+
     // --------------------------------------------------------
     // 1. Kategorie zurücksetzen
     // --------------------------------------------------------
