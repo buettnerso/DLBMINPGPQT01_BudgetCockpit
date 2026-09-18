@@ -101,8 +101,15 @@ BudgetCockpit::~BudgetCockpit()
 
 void BudgetCockpit::initializeGui()
 {
-    // Aktuelles Datum für neue Buchungen
-    ui.dateTransaction->setDate(
+    // --------------------------------------------------------
+    // Filterzeitraum initialisieren
+    // --------------------------------------------------------
+
+    ui.dateFilterFrom->setDate(
+        QDate::currentDate()
+    );
+
+    ui.dateFilterTo->setDate(
         QDate::currentDate()
     );
 
@@ -137,8 +144,35 @@ void BudgetCockpit::initializeGui()
     refreshCategories();
 
 
-    // Auswertung übernimmt beim Start den Filterzustand aus Buchungen
+    // --------------------------------------------------------
+    // Initiale Ansicht aufbauen
+    // --------------------------------------------------------
+
+    // Beim Programmstart ist der Datenbestand zunächst leer.
+    displayedTransactions =
+        budgetManager.getAllTransactions();
+
+    refreshTransactionTable(
+        displayedTransactions
+    );
+
+    refreshStatistics(
+        displayedTransactions
+    );
+
+    refreshAnalysisChart(
+        displayedTransactions
+    );
+
+
+    // Filterzustand auch im Reiter Auswertung anzeigen.
     syncBookingFilterToAnalysis();
+
+
+    // Neutrale Statusmeldung beim Programmstart.
+    statusBar()->showMessage(
+        "Bereit."
+    );
 }
 
 void BudgetCockpit::refreshCategories()
@@ -297,9 +331,18 @@ void BudgetCockpit::refreshAnalysisChart(
     // 3. Aktuellen Zeitraum anzeigen
     // --------------------------------------------------------
 
+    const int transactionCount =
+        transactions.size();
+
+    const QString transactionLabel =
+        transactionCount == 1
+        ? "Buchung"
+        : "Buchungen";
+
+
     ui.lblAnalysisPeriod->setText(
         QString(
-            "%1 bis %2 | %3 Buchungen"
+            "%1 bis %2 | %3 %4"
         )
         .arg(
             ui.dateFilterFrom
@@ -311,9 +354,8 @@ void BudgetCockpit::refreshAnalysisChart(
             ->date()
             .toString("dd.MM.yyyy")
         )
-        .arg(
-            transactions.size()
-        )
+        .arg(transactionCount)
+        .arg(transactionLabel)
     );
 
 
@@ -678,7 +720,7 @@ void BudgetCockpit::addTransaction()
     // --------------------------------------------------------
 
     statusBar()->showMessage(
-        "Gespeichert in: " +
+        "Buchung gespeichert – aktive Datei: " +
         QFileInfo(
             currentCsvFilePath
         ).fileName(),
@@ -946,7 +988,7 @@ void BudgetCockpit::applyFilter()
     {
         QMessageBox::warning(
             this,
-            "Ungültiger Zeitraum",
+            "Ungültige Eingabe",
             "Das Startdatum darf nicht nach dem Enddatum liegen."
         );
 
@@ -988,7 +1030,7 @@ void BudgetCockpit::applyFilter()
     {
         QMessageBox::warning(
             this,
-            "Ungültiger Betrag",
+            "Ungültige Eingabe",
             "Der Mindestbetrag darf nicht größer als der Höchstbetrag sein."
         );
 
@@ -1209,7 +1251,7 @@ void BudgetCockpit::openCsvFile()
     {
         QMessageBox::critical(
             this,
-            "CSV-Datei konnte nicht geladen werden",
+            "Budget-Datei konnte nicht geladen werden",
             errorMessage
         );
 
@@ -1264,7 +1306,7 @@ void BudgetCockpit::openCsvFile()
         this,
         "Budget-Datei geladen",
         QString(
-            "%1 Buchungen wurden aus\n%2\ngeladen."
+            "%1 Buchungen wurden erfolgreich aus \"%2\" geladen."
         )
         .arg(loadedTransactions.size())
         .arg(QFileInfo(filePath).fileName())
@@ -1341,7 +1383,7 @@ void BudgetCockpit::saveCsvFile()
         this,
         "Budget-Datei gespeichert",
         QString(
-            "%1 Buchungen wurden in\n%2\ngespeichert."
+            "%1 Buchungen wurden erfolgreich in \"%2\" gespeichert."
         )
         .arg(
             budgetManager

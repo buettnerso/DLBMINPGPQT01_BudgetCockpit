@@ -217,10 +217,19 @@ private:
         );
 
 
+        const int transactionCount =
+            transactions.size();
+
         ui.lblCurrentView->setText(
-            QString::number(
-                transactions.size()
-            ) + " Buchungen"
+            QString(
+                "%1 %2"
+            )
+            .arg(transactionCount)
+            .arg(
+                transactionCount == 1
+                ? "Buchung"
+                : "Buchungen"
+            )
         );
     }
 
