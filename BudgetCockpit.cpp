@@ -24,7 +24,9 @@ BudgetCockpit::BudgetCockpit(QWidget* parent)
 
     initializeGui();
 
+    // --------------------------------------------------------
     // Signal-Slot-Verbindungen
+    // --------------------------------------------------------
     connect(
         ui.btnAddTransaction,
         &QPushButton::clicked,
@@ -39,8 +41,8 @@ BudgetCockpit::BudgetCockpit(QWidget* parent)
         &BudgetCockpit::deleteTransaction
     );
 
-    
-    // Filter im Reiter Buchungen
+
+    // Filter im Reiter "Buchungen"
 
     connect(
         ui.btnApplyFilter,
@@ -55,8 +57,8 @@ BudgetCockpit::BudgetCockpit(QWidget* parent)
         this,
         &BudgetCockpit::resetFilter
     );
-           
-    // Filter im Reiter Auswertung
+
+    // Filter im Reiter "Auswertung"
 
     connect(
         ui.btnApplyAnalysisFilter,
@@ -90,7 +92,7 @@ BudgetCockpit::BudgetCockpit(QWidget* parent)
         &BudgetCockpit::saveCsvFile
     );
 
-   
+
 }
 
 
@@ -142,7 +144,7 @@ void BudgetCockpit::initializeGui()
 void BudgetCockpit::refreshCategories()
 {
     // --------------------------------------------------------
-    // Kategorieauswahl für neue Buchungen
+    // Kategorie für neue Buchung
     // --------------------------------------------------------
 
     ui.cmbCategory->clear();
@@ -153,7 +155,7 @@ void BudgetCockpit::refreshCategories()
 
 
     // --------------------------------------------------------
-    // Kategorieauswahl für Filter im Reiter Buchungen
+    // Kategorie im Filter Reiter Buchungen
     // --------------------------------------------------------
 
     ui.cmbFilterCategory->clear();
@@ -168,7 +170,7 @@ void BudgetCockpit::refreshCategories()
 
 
     // --------------------------------------------------------
-    // Kategorieauswahl für Filter im Reiter Auswertung
+    // Kategorie im Filter Reiter Auswertung
     // --------------------------------------------------------
 
     ui.cmbAnalysisCategory->clear();
@@ -182,9 +184,9 @@ void BudgetCockpit::refreshCategories()
     );
 }
 
-//--------------------------------------------------------------
-// Filter zwischen Buchungen und Auswertung synchronisieren
-//--------------------------------------------------------------
+// ============================================================
+// Filter zwischen den Reitern synchronisieren
+// ============================================================
 
 void BudgetCockpit::syncBookingFilterToAnalysis()
 {
@@ -241,9 +243,9 @@ void BudgetCockpit::syncAnalysisFilterToBooking()
     );
 }
 
-//--------------------------------------------------------------
-// Kreisdiagramm der gefilterten Buchungen aktualisieren
-//--------------------------------------------------------------
+// ============================================================
+// Kreisdiagramm aktualisieren
+// ============================================================
 
 void BudgetCockpit::refreshAnalysisChart(
     const QList<Transaction>& transactions)
@@ -494,7 +496,7 @@ void BudgetCockpit::addTransaction()
         ui.cmbTransactionType->currentText();
 
     const QString category =
-        ui.cmbCategory->currentText();
+        ui.cmbCategory->currentText().trimmed();
 
     const double amount =
         ui.spnAmount->value();
@@ -544,7 +546,18 @@ void BudgetCockpit::addTransaction()
 
 
     // --------------------------------------------------------
-    // 3. Falls noch keine CSV aktiv ist:
+// 3. Aktuellen Zustand für einen möglichen Rollback sichern
+// --------------------------------------------------------
+
+    const QList<Transaction> previousTransactions =
+        budgetManager.getAllTransactions();
+
+    const QString previousCsvFilePath =
+        currentCsvFilePath;
+
+
+    // --------------------------------------------------------
+    // 4. Falls noch keine CSV aktiv ist:
     //    Speicherort auswählen
     // --------------------------------------------------------
 
@@ -558,12 +571,11 @@ void BudgetCockpit::addTransaction()
                 "CSV-Dateien (*.csv);;Alle Dateien (*.*)"
             );
 
-
+        // Nutzer hat den Dialog abgebrochen.
         if (filePath.isEmpty())
         {
             return;
         }
-
 
         if (!filePath.endsWith(
             ".csv",
@@ -572,14 +584,13 @@ void BudgetCockpit::addTransaction()
             filePath += ".csv";
         }
 
-
         currentCsvFilePath =
             filePath;
     }
 
 
     // --------------------------------------------------------
-    // 4. Neue Transaction erzeugen
+    // 5. Neue Transaction erzeugen
     // --------------------------------------------------------
 
     Transaction transaction(
@@ -592,7 +603,7 @@ void BudgetCockpit::addTransaction()
 
 
     // --------------------------------------------------------
-    // 5. Buchung im BudgetManager speichern
+    // 6. Buchung vorläufig im BudgetManager speichern
     // --------------------------------------------------------
 
     budgetManager.addTransaction(
@@ -601,17 +612,53 @@ void BudgetCockpit::addTransaction()
 
 
     // --------------------------------------------------------
-    // 6. Aktive CSV automatisch speichern
+    // 7. Aktive CSV speichern
     // --------------------------------------------------------
 
     if (!saveCurrentCsvFile())
     {
+        // Speichern fehlgeschlagen:
+        // vorherigen Datenbestand wiederherstellen.
+        budgetManager.setTransactions(
+            previousTransactions
+        );
+
+        // Falls gerade erst eine neue Arbeitsdatei gewählt
+        // wurde, auch den vorherigen Dateizustand herstellen.
+        currentCsvFilePath =
+            previousCsvFilePath;
+
+        statusBar()->showMessage(
+            "Buchung wurde nicht übernommen.",
+            5000
+        );
+
         return;
     }
 
 
     // --------------------------------------------------------
-    // 7. Aktuelle Ansicht aktualisieren
+    // 8. Neue Kategorie erst nach erfolgreichem Speichern
+    //    dauerhaft in die Kategorienliste übernehmen
+    // --------------------------------------------------------
+
+    const bool newCategoryAdded =
+        categoryManager.addCategory(
+            category
+        );
+
+    if (newCategoryAdded)
+    {
+        refreshCategories();
+
+        ui.cmbCategory->setCurrentText(
+            category
+        );
+    }
+
+
+    // --------------------------------------------------------
+    // 9. Aktuelle Ansicht aktualisieren
     // --------------------------------------------------------
 
     if (filterActive)
@@ -627,7 +674,7 @@ void BudgetCockpit::addTransaction()
 
 
     // --------------------------------------------------------
-    // 8. Statusleiste aktualisieren
+    // 10. Statusleiste aktualisieren
     // --------------------------------------------------------
 
     statusBar()->showMessage(
@@ -640,7 +687,7 @@ void BudgetCockpit::addTransaction()
 
 
     // --------------------------------------------------------
-    // 9. Eingabefelder zurücksetzen
+    // 11. Eingabefelder zurücksetzen
     // --------------------------------------------------------
 
     ui.spnAmount->setValue(0.0);
@@ -730,21 +777,25 @@ void BudgetCockpit::deleteTransaction()
 
 
     // --------------------------------------------------------
-    // 4. Passende Buchung im vollständigen Datenbestand suchen
+    // 4. Aktuellen Datenbestand für Rollback sichern
     // --------------------------------------------------------
 
-    const QList<Transaction>& allTransactions =
+    const QList<Transaction> previousTransactions =
         budgetManager.getAllTransactions();
 
     int managerIndex = -1;
 
 
+    // --------------------------------------------------------
+    // 5. Passende Buchung im vollständigen Datenbestand suchen
+    // --------------------------------------------------------
+
     for (int i = 0;
-        i < allTransactions.size();
+        i < previousTransactions.size();
         ++i)
     {
         const Transaction& transaction =
-            allTransactions.at(i);
+            previousTransactions.at(i);
 
 
         const bool sameTransaction =
@@ -785,7 +836,7 @@ void BudgetCockpit::deleteTransaction()
 
 
     // --------------------------------------------------------
-    // 5. Buchung aus dem BudgetManager entfernen
+    // 6. Buchung aus dem BudgetManager entfernen
     // --------------------------------------------------------
 
     if (!budgetManager.removeTransaction(
@@ -802,20 +853,31 @@ void BudgetCockpit::deleteTransaction()
 
 
     // --------------------------------------------------------
-    // 6. Aktuelle CSV automatisch aktualisieren
+    // 7. Aktuelle CSV aktualisieren
     // --------------------------------------------------------
 
     if (!currentCsvFilePath.isEmpty())
     {
         if (!saveCurrentCsvFile())
         {
+            // Speichern fehlgeschlagen:
+            // Löschung im Arbeitsspeicher zurücknehmen.
+            budgetManager.setTransactions(
+                previousTransactions
+            );
+
+            statusBar()->showMessage(
+                "Löschen wurde nicht übernommen.",
+                5000
+            );
+
             return;
         }
     }
 
 
     // --------------------------------------------------------
-    // 7. GUI aktualisieren
+    // 8. GUI aktualisieren
     // --------------------------------------------------------
 
     if (filterActive)
@@ -831,7 +893,7 @@ void BudgetCockpit::deleteTransaction()
 
 
     // --------------------------------------------------------
-    // 8. Rückmeldung
+    // 9. Rückmeldung
     // --------------------------------------------------------
 
     statusBar()->showMessage(
@@ -908,7 +970,7 @@ void BudgetCockpit::applyFilter()
 
 
     // 0,00 bedeutet:
-    // Für diese Seite ist keine Betragsgrenze gesetzt.
+    // Für diese Ansicht ist keine Betragsgrenze gesetzt.
     if (minValue > 0.0)
     {
         minAmount = minValue;
@@ -966,7 +1028,7 @@ void BudgetCockpit::applyFilter()
         displayedTransactions
     );
 
-	// Kreisdiagramm für die gefilterten Daten aktualisieren
+    // Kreisdiagramm für die aktuelle Ansicht aktualisieren
     refreshAnalysisChart(
         displayedTransactions
     );
@@ -1091,7 +1153,7 @@ void BudgetCockpit::resetFilter()
         displayedTransactions
     );
 
-	// Kreisdiagramm für die gefilterten Daten aktualisieren
+    // Kreisdiagramm für die aktuelle Ansicht aktualisieren
     refreshAnalysisChart(
         displayedTransactions
     );
@@ -1109,9 +1171,9 @@ void BudgetCockpit::resetFilter()
     );
 }
 
-//--------------------------------------------------------------
-// CSV FUnktionen
-//--------------------------------------------------------------
+// ============================================================
+// CSV-Funktionen
+// ============================================================
 
 void BudgetCockpit::openCsvFile()
 {
@@ -1209,9 +1271,9 @@ void BudgetCockpit::openCsvFile()
     );
 }
 
-//--------------------------------------------------------------
-// CSV Speichern unter ...
-//--------------------------------------------------------------
+// --------------------------------------------------------
+// CSV speichern unter ...
+// --------------------------------------------------------
 
 void BudgetCockpit::saveCsvFile()
 {
@@ -1295,9 +1357,9 @@ void BudgetCockpit::saveCsvFile()
 }
 
 
-//--------------------------------------------------------------
-// Aktuelle CSV automatisch speichern
-//--------------------------------------------------------------
+// --------------------------------------------------------
+// Aktive CSV automatisch speichern
+// --------------------------------------------------------
 
 bool BudgetCockpit::saveCurrentCsvFile()
 {

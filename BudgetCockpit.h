@@ -30,29 +30,29 @@ private slots:
     void applyFilter();
     void resetFilter();
 
-    // CSV-Datei öffnen
+    // CSV-Persistenz-Datei öffnen
     void openCsvFile();
-	void saveCsvFile();
+    void saveCsvFile();
 
 
 private:
     Ui::BudgetCockpitClass ui;
 
-    // GeschäftslogikB
+    // Geschäftslogik
     BudgetManager budgetManager;
     CategoryManager categoryManager;
 
-    //--------------------------------------------------------------
+    // --------------------------------------------------------
 
-    // CSV-Persistenz
+    // CSV-Persistenz-Persistenz
     CsvRepository csvRepository;
 
-    //--------------------------------------------------------------
+    // --------------------------------------------------------
 
     // Aktuell geöffnete Budget-Datei
     QString currentCsvFilePath;
 
-    //--------------------------------------------------------------
+    // --------------------------------------------------------
 
     // Aktuell in der Tabelle dargestellte Buchungen
     QList<Transaction> displayedTransactions;
@@ -63,19 +63,19 @@ private:
     // Status der Filterung
     bool filterActive = false;
 
-    //--------------------------------------------------------------
+    // --------------------------------------------------------
 
     // Initialisierung der Oberfläche
     void initializeGui();
 
-	//--------------------------------------------------------------
+    // --------------------------------------------------------
 
-    // CSV
+    // CSV-Persistenz
     bool saveCurrentCsvFile();
 
-	//--------------------------------------------------------------
+    // --------------------------------------------------------
 
-    // Aktualisierung der Darstellung
+    // Darstellung aktualisieren
     void refreshTransactionTable(
         const QList<Transaction>& transactions)
     {
@@ -163,7 +163,7 @@ private:
             ->setStretchLastSection(true);
     }
 
-	//---------------------------------------------------------
+    // --------------------------------------------------------
 
     void refreshStatistics(
         const QList<Transaction>& transactions)
@@ -231,7 +231,7 @@ private:
 
     void syncAnalysisFilterToBooking();
 
-    // Auswertung aktualisieren
+    // Auswertung / Kreisdiagramm aktualisieren
     void refreshAnalysisChart(
         const QList<Transaction>& transactions
     );

@@ -2,9 +2,16 @@
 #include "CsvRepository.h"
 
 #include <QFile>
+#include <QSaveFile>
 #include <QTextStream>
 #include <QStringConverter>
 
+#include <cmath>
+
+
+// ============================================================
+// CSV speichern
+// ============================================================
 
 bool CsvRepository::save(
     const QString& filePath,
@@ -12,17 +19,20 @@ bool CsvRepository::save(
     QString* errorMessage
 ) const
 {
-    QFile file(filePath);
+    // QSaveFile schreibt zunächst in eine temporäre Datei.
+    // Erst commit() ersetzt die Zieldatei, wenn das Schreiben
+    // vollständig erfolgreich war.
+    QSaveFile file(filePath);
 
     if (!file.open(
         QIODevice::WriteOnly |
-        QIODevice::Text
-    ))
+        QIODevice::Text))
     {
         if (errorMessage != nullptr)
         {
             *errorMessage =
-                "Die CSV-Datei konnte nicht zum Schreiben geöffnet werden.";
+                "Die CSV-Datei konnte nicht zum Schreiben geöffnet werden.\n" +
+                file.errorString();
         }
 
         return false;
@@ -45,6 +55,7 @@ bool CsvRepository::save(
         << "Beschreibung\n";
 
 
+    // Buchungen zeilenweise schreiben.
     for (const Transaction& transaction : transactions)
     {
         stream
@@ -76,11 +87,45 @@ bool CsvRepository::save(
     }
 
 
-    file.close();
+    // Gepufferte Daten vollständig an QSaveFile übergeben.
+    stream.flush();
+
+    if (stream.status() != QTextStream::Ok)
+    {
+        file.cancelWriting();
+
+        if (errorMessage != nullptr)
+        {
+            *errorMessage =
+                "Beim Schreiben der CSV-Datei ist ein Fehler aufgetreten.\n" +
+                file.errorString();
+        }
+
+        return false;
+    }
+
+
+    // Die temporäre Datei ersetzt erst jetzt die Zieldatei.
+    if (!file.commit())
+    {
+        if (errorMessage != nullptr)
+        {
+            *errorMessage =
+                "Die CSV-Datei konnte nicht sicher gespeichert werden.\n" +
+                file.errorString();
+        }
+
+        return false;
+    }
+
 
     return true;
 }
 
+
+// ============================================================
+// CSV laden
+// ============================================================
 
 bool CsvRepository::load(
     const QString& filePath,
@@ -92,13 +137,13 @@ bool CsvRepository::load(
 
     if (!file.open(
         QIODevice::ReadOnly |
-        QIODevice::Text
-    ))
+        QIODevice::Text))
     {
         if (errorMessage != nullptr)
         {
             *errorMessage =
-                "Die CSV-Datei konnte nicht geöffnet werden.";
+                "Die CSV-Datei konnte nicht geöffnet werden.\n" +
+                file.errorString();
         }
 
         return false;
@@ -112,22 +157,82 @@ bool CsvRepository::load(
     );
 
 
-    // Erst in eine temporäre Liste laden.
-    // Dadurch bleiben vorhandene Daten erhalten,
-    // falls die CSV fehlerhaft ist.
+    // Zunächst in eine temporäre Liste laden.
+    // Der vorhandene Datenbestand wird nur bei vollständig
+    // erfolgreichem Einlesen ersetzt.
     QList<Transaction> loadedTransactions;
-
 
     int lineNumber = 0;
 
 
-    // Kopfzeile einlesen
-    if (!stream.atEnd())
+    // --------------------------------------------------------
+    // Kopfzeile prüfen
+    // --------------------------------------------------------
+
+    if (stream.atEnd())
     {
-        stream.readLine();
-        ++lineNumber;
+        if (errorMessage != nullptr)
+        {
+            *errorMessage =
+                "Die CSV-Datei ist leer und enthält keine gültige Kopfzeile.";
+        }
+
+        return false;
     }
 
+
+    const QString headerLine =
+        stream.readLine();
+
+    ++lineNumber;
+
+
+    bool headerOk = false;
+
+    const QStringList headerFields =
+        parseCsvLine(
+            headerLine,
+            &headerOk
+        );
+
+
+    const QStringList expectedHeader =
+    {
+        "Datum",
+        "Art",
+        "Kategorie",
+        "Betrag",
+        "Beschreibung"
+    };
+
+
+    QStringList normalizedHeader;
+
+    for (const QString& field : headerFields)
+    {
+        normalizedHeader.append(
+            field.trimmed()
+        );
+    }
+
+
+    if (!headerOk ||
+        normalizedHeader != expectedHeader)
+    {
+        if (errorMessage != nullptr)
+        {
+            *errorMessage =
+                "Die CSV-Datei besitzt keine gültige Kopfzeile.\n"
+                "Erwartet wird: Datum;Art;Kategorie;Betrag;Beschreibung";
+        }
+
+        return false;
+    }
+
+
+    // --------------------------------------------------------
+    // Buchungszeilen einlesen und validieren
+    // --------------------------------------------------------
 
     while (!stream.atEnd())
     {
@@ -137,6 +242,7 @@ bool CsvRepository::load(
         ++lineNumber;
 
 
+        // Leere Zeilen werden toleriert.
         if (line.trimmed().isEmpty())
         {
             continue;
@@ -167,6 +273,7 @@ bool CsvRepository::load(
         }
 
 
+        // Datum
         const QDate date =
             QDate::fromString(
                 fields.at(0).trimmed(),
@@ -188,18 +295,52 @@ bool CsvRepository::load(
         }
 
 
+        // Art
         const QString type =
             fields.at(1).trimmed();
 
+
+        if (type != "Einnahme" &&
+            type != "Ausgabe")
+        {
+            if (errorMessage != nullptr)
+            {
+                *errorMessage =
+                    QString(
+                        "Ungültige Buchungsart in Zeile %1. "
+                        "Erlaubt sind \"Einnahme\" und \"Ausgabe\"."
+                    ).arg(lineNumber);
+            }
+
+            return false;
+        }
+
+
+        // Kategorie
         const QString category =
             fields.at(2).trimmed();
 
 
+        if (category.isEmpty())
+        {
+            if (errorMessage != nullptr)
+            {
+                *errorMessage =
+                    QString(
+                        "Die Kategorie in Zeile %1 darf nicht leer sein."
+                    ).arg(lineNumber);
+            }
+
+            return false;
+        }
+
+
+        // Betrag
         QString amountText =
             fields.at(3).trimmed();
 
-        // Unterstützt zusätzlich deutsches Dezimaltrennzeichen,
-        // falls die Datei beispielsweise in Excel bearbeitet wurde.
+        // Zusätzlich deutsches Dezimaltrennzeichen akzeptieren,
+        // z. B. nach einer manuellen Bearbeitung in Excel.
         amountText.replace(',', '.');
 
 
@@ -211,13 +352,16 @@ bool CsvRepository::load(
             );
 
 
-        if (!amountOk)
+        if (!amountOk ||
+            !std::isfinite(amount) ||
+            amount <= 0.0)
         {
             if (errorMessage != nullptr)
             {
                 *errorMessage =
                     QString(
-                        "Ungültiger Betrag in Zeile %1."
+                        "Ungültiger Betrag in Zeile %1. "
+                        "Der Betrag muss größer als 0,00 sein."
                     ).arg(lineNumber);
             }
 
@@ -225,8 +369,9 @@ bool CsvRepository::load(
         }
 
 
+        // Beschreibung ist optional.
         const QString description =
-            fields.at(4);
+            fields.at(4).trimmed();
 
 
         loadedTransactions.append(
@@ -241,10 +386,24 @@ bool CsvRepository::load(
     }
 
 
+    if (stream.status() != QTextStream::Ok)
+    {
+        if (errorMessage != nullptr)
+        {
+            *errorMessage =
+                "Beim Lesen der CSV-Datei ist ein Fehler aufgetreten.\n" +
+                file.errorString();
+        }
+
+        return false;
+    }
+
+
     file.close();
 
 
-    // Erst jetzt die bisherige Liste ersetzen.
+    // Erst nach vollständiger Validierung wird der bisherige
+    // Datenbestand durch die geladenen Buchungen ersetzt.
     transactions =
         loadedTransactions;
 
@@ -253,6 +412,10 @@ bool CsvRepository::load(
 }
 
 
+// ============================================================
+// CSV-Feld für die Ausgabe vorbereiten
+// ============================================================
+
 QString CsvRepository::escapeCsvField(
     const QString& value
 ) const
@@ -260,17 +423,15 @@ QString CsvRepository::escapeCsvField(
     QString escaped = value;
 
 
-    // Doppelte Anführungszeichen innerhalb
-    // eines CSV-Feldes werden verdoppelt.
+    // Anführungszeichen innerhalb eines Feldes verdoppeln.
     escaped.replace(
         "\"",
         "\"\""
     );
 
 
-    // Enthält das Feld ein Semikolon oder
-    // Anführungszeichen, wird es vollständig
-    // in Anführungszeichen gesetzt.
+    // Felder mit Semikolon oder Anführungszeichen werden
+    // vollständig in Anführungszeichen eingeschlossen.
     if (escaped.contains(';') ||
         escaped.contains('"'))
     {
@@ -282,6 +443,10 @@ QString CsvRepository::escapeCsvField(
     return escaped;
 }
 
+
+// ============================================================
+// Eine CSV-Zeile in einzelne Felder zerlegen
+// ============================================================
 
 QStringList CsvRepository::parseCsvLine(
     const QString& line,
@@ -305,9 +470,8 @@ QStringList CsvRepository::parseCsvLine(
 
         if (character == '"')
         {
-            // Zwei Anführungszeichen innerhalb
-            // eines Textfeldes bedeuten ein
-            // tatsächliches Anführungszeichen.
+            // Zwei Anführungszeichen innerhalb eines
+            // Textfeldes entsprechen einem echten ".
             if (insideQuotes &&
                 i + 1 < line.size() &&
                 line.at(i + 1) == '"')
@@ -338,6 +502,8 @@ QStringList CsvRepository::parseCsvLine(
     }
 
 
+    // Nicht geschlossenes Anführungszeichen:
+    // Zeile ist syntaktisch ungültig.
     if (insideQuotes)
     {
         if (ok != nullptr)

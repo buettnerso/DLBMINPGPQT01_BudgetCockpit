@@ -11,6 +11,12 @@ CategoryManager::CategoryManager()
     categories.append("Miete");
     categories.append("Lebensmittel");
     categories.append("Freizeit");
+    categories.append("Gehalt/Lohn");
+    categories.append("Auto");
+    categories.append("Reisen");
+    categories.append("Versicherungen");
+    categories.append("Strom");
+
 }
 
 
