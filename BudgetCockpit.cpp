@@ -93,6 +93,20 @@ BudgetCockpit::BudgetCockpit(QWidget* parent)
     );
 
 
+
+    // Löschen nur ermöglichen, wenn tatsächlich eine
+    // Tabellenzeile ausgewählt ist.
+    connect(
+        ui.tblTransactions,
+        &QTableWidget::itemSelectionChanged,
+        this,
+        [this]()
+        {
+            ui.btnDeleteTransaction->setEnabled(
+                ui.tblTransactions->currentRow() >= 0
+            );
+        }
+    );
 }
 
 
@@ -102,9 +116,51 @@ BudgetCockpit::~BudgetCockpit()
 void BudgetCockpit::initializeGui()
 {
     // --------------------------------------------------------
-    // Filterzeitraum initialisieren
+    // Startansicht und grundlegende Bedienlogik
     // --------------------------------------------------------
 
+    // Beim Programmstart mit der Hauptansicht "Buchungen" beginnen.
+    ui.tabMain->setCurrentIndex(0);
+
+    // Ohne ausgewählte Tabellenzeile ist Löschen nicht möglich.
+    ui.btnDeleteTransaction->setEnabled(false);
+
+    // Tabellenbreiten einmalig konfigurieren.
+    QHeaderView* header =
+        ui.tblTransactions->horizontalHeader();
+
+    header->setSectionResizeMode(
+        0,
+        QHeaderView::ResizeToContents
+    );
+
+    header->setSectionResizeMode(
+        1,
+        QHeaderView::ResizeToContents
+    );
+
+    header->setSectionResizeMode(
+        2,
+        QHeaderView::ResizeToContents
+    );
+
+    header->setSectionResizeMode(
+        3,
+        QHeaderView::ResizeToContents
+    );
+
+    header->setSectionResizeMode(
+        4,
+        QHeaderView::Stretch
+    );
+
+
+    // Aktuelles Datum für neue Buchungen
+    ui.dateTransaction->setDate(
+        QDate::currentDate()
+    );
+
+    // Filterzeitraum beim Start eindeutig initialisieren.
     ui.dateFilterFrom->setDate(
         QDate::currentDate()
     );
@@ -148,7 +204,6 @@ void BudgetCockpit::initializeGui()
     // Initiale Ansicht aufbauen
     // --------------------------------------------------------
 
-    // Beim Programmstart ist der Datenbestand zunächst leer.
     displayedTransactions =
         budgetManager.getAllTransactions();
 
@@ -164,12 +219,9 @@ void BudgetCockpit::initializeGui()
         displayedTransactions
     );
 
-
-    // Filterzustand auch im Reiter Auswertung anzeigen.
+    // Auswertung übernimmt beim Start den Filterzustand aus Buchungen.
     syncBookingFilterToAnalysis();
 
-
-    // Neutrale Statusmeldung beim Programmstart.
     statusBar()->showMessage(
         "Bereit."
     );
@@ -338,7 +390,6 @@ void BudgetCockpit::refreshAnalysisChart(
         transactionCount == 1
         ? "Buchung"
         : "Buchungen";
-
 
     ui.lblAnalysisPeriod->setText(
         QString(
@@ -739,6 +790,10 @@ void BudgetCockpit::addTransaction()
     ui.dateTransaction->setDate(
         QDate::currentDate()
     );
+
+    // Für eine schnelle Folgeeingabe direkt wieder
+    // in das Betragsfeld springen.
+    ui.spnAmount->setFocus();
 }
 
 
@@ -1302,13 +1357,22 @@ void BudgetCockpit::openCsvFile()
 
 
     // Erst jetzt Erfolgsmeldung anzeigen.
+    const int loadedCount =
+        loadedTransactions.size();
+
+    const QString loadedLabel =
+        loadedCount == 1
+        ? "Buchung wurde"
+        : "Buchungen wurden";
+
     QMessageBox::information(
         this,
         "Budget-Datei geladen",
         QString(
-            "%1 Buchungen wurden erfolgreich aus \"%2\" geladen."
+            "%1 %2 erfolgreich aus \"%3\" geladen."
         )
-        .arg(loadedTransactions.size())
+        .arg(loadedCount)
+        .arg(loadedLabel)
         .arg(QFileInfo(filePath).fileName())
     );
 }
@@ -1379,17 +1443,24 @@ void BudgetCockpit::saveCsvFile()
         QFileInfo(currentCsvFilePath).fileName()
     );
 
+    const int savedCount =
+        budgetManager
+        .getAllTransactions()
+        .size();
+
+    const QString savedLabel =
+        savedCount == 1
+        ? "Buchung wurde"
+        : "Buchungen wurden";
+
     QMessageBox::information(
         this,
         "Budget-Datei gespeichert",
         QString(
-            "%1 Buchungen wurden erfolgreich in \"%2\" gespeichert."
+            "%1 %2 erfolgreich in \"%3\" gespeichert."
         )
-        .arg(
-            budgetManager
-            .getAllTransactions()
-            .size()
-        )
+        .arg(savedCount)
+        .arg(savedLabel)
         .arg(
             QFileInfo(
                 currentCsvFilePath

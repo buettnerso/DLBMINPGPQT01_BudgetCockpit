@@ -157,10 +157,11 @@ private:
             );
         }
 
-        // Beschreibung bekommt den restlichen Platz
-        ui.tblTransactions
-            ->horizontalHeader()
-            ->setStretchLastSection(true);
+        // Nach dem Neuaufbau keine alte Auswahl übernehmen.
+        ui.tblTransactions->clearSelection();
+
+        // Löschen erst wieder nach einer neuen Auswahl erlauben.
+        ui.btnDeleteTransaction->setEnabled(false);
     }
 
     // --------------------------------------------------------
@@ -221,9 +222,7 @@ private:
             transactions.size();
 
         ui.lblCurrentView->setText(
-            QString(
-                "%1 %2"
-            )
+            QString("%1 %2")
             .arg(transactionCount)
             .arg(
                 transactionCount == 1
