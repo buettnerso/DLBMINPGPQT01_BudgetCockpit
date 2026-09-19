@@ -10,6 +10,7 @@
 #include "CsvRepository.h"
 
 class QChartView;
+class QLabel;
 
 class BudgetCockpit : public QMainWindow
 {
@@ -20,21 +21,18 @@ public:
     ~BudgetCockpit();
 
 private slots:
-    // Neue Buchung erfassen
+    // Buchungen
     void addTransaction();
-
-    // Buchung löschen
     void deleteTransaction();
 
     // Filter
     void applyFilter();
     void resetFilter();
 
-    // CSV-Persistenz-Datei öffnen
+    // Budget-Dateien / CSV-Persistenz
     void createNewCsvFile();
     void openCsvFile();
     void saveCsvFile();
-
 
 private:
     Ui::BudgetCockpitClass ui;
@@ -43,212 +41,45 @@ private:
     BudgetManager budgetManager;
     CategoryManager categoryManager;
 
-    // --------------------------------------------------------
-
-    // CSV-Persistenz-Persistenz
+    // CSV-Persistenz
     CsvRepository csvRepository;
-
-    // --------------------------------------------------------
-
-    // Aktuell geöffnete Budget-Datei
     QString currentCsvFilePath;
 
-    // --------------------------------------------------------
+    // Permanente Anzeige der aktiven Datei in der Statusleiste
+    QLabel* lblActiveCsvFile = nullptr;
 
-    // Aktuell in der Tabelle dargestellte Buchungen
+    // Aktuell dargestellte Buchungen
     QList<Transaction> displayedTransactions;
 
-    // Aktuell dargestelltes Kreisdiagramm
+    // Aktuelles Kreisdiagramm
     QChartView* analysisChartView = nullptr;
 
     // Status der Filterung
     bool filterActive = false;
 
-    // --------------------------------------------------------
-
-    // Initialisierung der Oberfläche
+    // Initialisierung / Status
     void initializeGui();
+    void updateActiveFileDisplay();
 
-    // --------------------------------------------------------
-
-    // CSV-Persistenz
+    // Persistenz-Hilfsfunktion
     bool saveCurrentCsvFile();
 
-    // --------------------------------------------------------
-
-    // Darstellung aktualisieren
+    // Darstellung
     void refreshTransactionTable(
-        const QList<Transaction>& transactions)
-    {
-        // Tabelle zunächst auf die benötigte
-        // Anzahl an Zeilen setzen
-        ui.tblTransactions->setRowCount(
-            transactions.size()
-        );
-
-        // Deutsche Darstellung für Geldbeträge
-        const QLocale germanLocale(
-            QLocale::German,
-            QLocale::Germany
-        );
-
-        for (int row = 0;
-            row < transactions.size();
-            ++row)
-        {
-            const Transaction& transaction =
-                transactions.at(row);
-
-            // Datum
-            ui.tblTransactions->setItem(
-                row,
-                0,
-                new QTableWidgetItem(
-                    transaction.getDate()
-                    .toString("dd.MM.yyyy")
-                )
-            );
-
-            // Art
-            ui.tblTransactions->setItem(
-                row,
-                1,
-                new QTableWidgetItem(
-                    transaction.getType()
-                )
-            );
-
-            // Kategorie
-            ui.tblTransactions->setItem(
-                row,
-                2,
-                new QTableWidgetItem(
-                    transaction.getCategory()
-                )
-            );
-
-            // Betrag
-            QTableWidgetItem* amountItem =
-                new QTableWidgetItem(
-                    germanLocale.toString(
-                        transaction.getAmount(),
-                        'f',
-                        2
-                    ) + " €"
-                );
-
-            amountItem->setTextAlignment(
-                Qt::AlignRight |
-                Qt::AlignVCenter
-            );
-
-            ui.tblTransactions->setItem(
-                row,
-                3,
-                amountItem
-            );
-
-            // Beschreibung
-            ui.tblTransactions->setItem(
-                row,
-                4,
-                new QTableWidgetItem(
-                    transaction.getDescription()
-                )
-            );
-        }
-
-        // Nach dem Neuaufbau keine alte Auswahl übernehmen.
-        ui.tblTransactions->clearSelection();
-
-        // Löschen erst wieder nach einer neuen Auswahl erlauben.
-        ui.btnDeleteTransaction->setEnabled(false);
-    }
-
-    // --------------------------------------------------------
+        const QList<Transaction>& transactions
+    );
 
     void refreshStatistics(
-        const QList<Transaction>& transactions)
-    {
-        const double income =
-            budgetManager.calculateIncome(
-                transactions
-            );
-
-        const double expenses =
-            budgetManager.calculateExpenses(
-                transactions
-            );
-
-        const double balance =
-            budgetManager.calculateBalance(
-                transactions
-            );
-
-
-        const QLocale germanLocale(
-            QLocale::German,
-            QLocale::Germany
-        );
-
-
-        ui.lblIncomeValue->setText(
-            germanLocale.toString(
-                income,
-                'f',
-                2
-            ) + " €"
-        );
-
-
-        ui.lblExpenseValue->setText(
-            germanLocale.toString(
-                expenses,
-                'f',
-                2
-            ) + " €"
-        );
-
-
-        ui.lblBalanceValue->setText(
-            germanLocale.toString(
-                balance,
-                'f',
-                2
-            ) + " €"
-        );
-
-
-        const int count =
-            transactions.size();
-
-        const QString viewStatus =
-            filterActive
-            ? "Gefiltert"
-            : "Ungefiltert";
-
-        ui.lblCurrentView->setText(
-            QString(
-                "%1\n%2 %3"
-            )
-            .arg(viewStatus)
-            .arg(count)
-            .arg(
-                count == 1
-                ? "Buchung"
-                : "Buchungen"
-            )
-        );
-    }
+        const QList<Transaction>& transactions
+    );
 
     void refreshCategories();
 
-
+    // Filter zwischen beiden Reitern synchronisieren
     void syncBookingFilterToAnalysis();
-
     void syncAnalysisFilterToBooking();
 
-    // Auswertung / Kreisdiagramm aktualisieren
+    // Auswertung / Kreisdiagramm
     void refreshAnalysisChart(
         const QList<Transaction>& transactions
     );

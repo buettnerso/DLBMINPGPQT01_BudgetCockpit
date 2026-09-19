@@ -7,12 +7,17 @@
 #include <QTableWidgetItem>
 #include <QHeaderView>
 #include <QLocale>
+#include <QLabel>
+#include <QStatusBar>
+#include <QDir>
 
 #include <QChart>
 #include <QChartView>
 #include <QPieSeries>
 #include <QPieSlice>
 #include <QLegend>
+#include <QLegendMarker>
+#include <QPieLegendMarker>
 #include <QPainter>
 
 #include <optional>
@@ -120,6 +125,46 @@ BudgetCockpit::BudgetCockpit(QWidget* parent)
 BudgetCockpit::~BudgetCockpit()
 {}
 
+//--------------------------------------------------------------
+// Aktive Budget-Datei dauerhaft in der Statusleiste anzeigen
+//--------------------------------------------------------------
+
+void BudgetCockpit::updateActiveFileDisplay()
+{
+    if (lblActiveCsvFile == nullptr)
+    {
+        return;
+    }
+
+    if (currentCsvFilePath.isEmpty())
+    {
+        lblActiveCsvFile->setText(
+            "Datei: keine Budget-Datei geöffnet"
+        );
+
+        lblActiveCsvFile->setToolTip(
+            QString()
+        );
+
+        return;
+    }
+
+    const QString nativePath =
+        QDir::toNativeSeparators(
+            currentCsvFilePath
+        );
+
+    // Der vollständige Pfad bleibt permanent sichtbar.
+    lblActiveCsvFile->setText(
+        "Datei: " + nativePath
+    );
+
+    // Zusätzlich als Tooltip, falls die Statusleiste zu schmal ist.
+    lblActiveCsvFile->setToolTip(
+        nativePath
+    );
+}
+
 void BudgetCockpit::initializeGui()
 {
     // --------------------------------------------------------
@@ -177,6 +222,7 @@ void BudgetCockpit::initializeGui()
     );
 
 
+
     // --------------------------------------------------------
     // Betragsfilter Buchungen
     // --------------------------------------------------------
@@ -229,8 +275,183 @@ void BudgetCockpit::initializeGui()
     // Auswertung übernimmt beim Start den Filterzustand aus Buchungen.
     syncBookingFilterToAnalysis();
 
+    // Permanente Anzeige der aktiven Budget-Datei rechts in der Statusleiste.
+    // Temporäre Meldungen von showMessage() können dadurch weiterhin links
+    // angezeigt werden, ohne den Dateipfad dauerhaft zu überschreiben.
+    if (lblActiveCsvFile == nullptr)
+    {
+        lblActiveCsvFile =
+            new QLabel(this);
+
+        lblActiveCsvFile->setTextInteractionFlags(
+            Qt::TextSelectableByMouse
+        );
+
+        statusBar()->addPermanentWidget(
+            lblActiveCsvFile
+        );
+    }
+
+    updateActiveFileDisplay();
+
     statusBar()->showMessage(
-        "Bereit."
+        "Bereit.",
+        3000
+    );
+}
+
+//--------------------------------------------------------------
+// Tabellenansicht aktualisieren
+//--------------------------------------------------------------
+
+void BudgetCockpit::refreshTransactionTable(
+    const QList<Transaction>& transactions)
+{
+    ui.tblTransactions->setRowCount(
+        transactions.size()
+    );
+
+    const QLocale germanLocale(
+        QLocale::German,
+        QLocale::Germany
+    );
+
+    for (int row = 0;
+        row < transactions.size();
+        ++row)
+    {
+        const Transaction& transaction =
+            transactions.at(row);
+
+        ui.tblTransactions->setItem(
+            row,
+            0,
+            new QTableWidgetItem(
+                transaction.getDate()
+                .toString("dd.MM.yyyy")
+            )
+        );
+
+        ui.tblTransactions->setItem(
+            row,
+            1,
+            new QTableWidgetItem(
+                transaction.getType()
+            )
+        );
+
+        ui.tblTransactions->setItem(
+            row,
+            2,
+            new QTableWidgetItem(
+                transaction.getCategory()
+            )
+        );
+
+        QTableWidgetItem* amountItem =
+            new QTableWidgetItem(
+                germanLocale.toString(
+                    transaction.getAmount(),
+                    'f',
+                    2
+                ) + " €"
+            );
+
+        amountItem->setTextAlignment(
+            Qt::AlignRight |
+            Qt::AlignVCenter
+        );
+
+        ui.tblTransactions->setItem(
+            row,
+            3,
+            amountItem
+        );
+
+        ui.tblTransactions->setItem(
+            row,
+            4,
+            new QTableWidgetItem(
+                transaction.getDescription()
+            )
+        );
+    }
+
+    // Nach einem Neuaufbau ist keine alte Auswahl mehr gültig.
+    ui.tblTransactions->clearSelection();
+    ui.btnDeleteTransaction->setEnabled(false);
+}
+
+//--------------------------------------------------------------
+// Kennzahlen und Ansichtsstatus aktualisieren
+//--------------------------------------------------------------
+
+void BudgetCockpit::refreshStatistics(
+    const QList<Transaction>& transactions)
+{
+    const double income =
+        budgetManager.calculateIncome(
+            transactions
+        );
+
+    const double expenses =
+        budgetManager.calculateExpenses(
+            transactions
+        );
+
+    const double balance =
+        budgetManager.calculateBalance(
+            transactions
+        );
+
+    const QLocale germanLocale(
+        QLocale::German,
+        QLocale::Germany
+    );
+
+    ui.lblIncomeValue->setText(
+        germanLocale.toString(
+            income,
+            'f',
+            2
+        ) + " €"
+    );
+
+    ui.lblExpenseValue->setText(
+        germanLocale.toString(
+            expenses,
+            'f',
+            2
+        ) + " €"
+    );
+
+    ui.lblBalanceValue->setText(
+        germanLocale.toString(
+            balance,
+            'f',
+            2
+        ) + " €"
+    );
+
+    const int count =
+        transactions.size();
+
+    const QString viewStatus =
+        filterActive
+        ? "Gefiltert"
+        : "Ungefiltert";
+
+    ui.lblCurrentView->setText(
+        QString(
+            "%1\n%2 %3"
+        )
+        .arg(viewStatus)
+        .arg(count)
+        .arg(
+            count == 1
+            ? "Buchung"
+            : "Buchungen"
+        )
     );
 }
 
@@ -550,6 +771,108 @@ void BudgetCockpit::refreshAnalysisChart(
         Qt::AlignRight
     );
 
+    // --------------------------------------------------------
+// Interaktive Hervorhebung von Kreisdiagramm und Legende
+// --------------------------------------------------------
+
+    const QList<QLegendMarker*> legendMarkers =
+        chart->legend()->markers(series);
+
+
+    for (QLegendMarker* marker : legendMarkers)
+    {
+        QPieLegendMarker* pieMarker =
+            qobject_cast<QPieLegendMarker*>(marker);
+
+        if (pieMarker == nullptr)
+        {
+            continue;
+        }
+
+
+        QPieSlice* slice =
+            pieMarker->slice();
+
+
+        if (slice == nullptr)
+        {
+            continue;
+        }
+
+
+        // Abstand des Segments beim Hervorheben.
+        slice->setExplodeDistanceFactor(
+            0.08
+        );
+
+
+        // Ursprüngliche Schriftarten merken.
+        const QFont normalSliceFont =
+            slice->labelFont();
+
+        const QFont normalLegendFont =
+            pieMarker->font();
+
+
+        // Gemeinsame Funktion für Segment und Legende.
+        const auto setHighlighted =
+            [slice,
+            pieMarker,
+            normalSliceFont,
+            normalLegendFont]
+            (bool highlighted)
+            {
+                // Segment etwas aus dem Kreis herausziehen.
+                slice->setExploded(
+                    highlighted
+                );
+
+
+                // Beschriftung am Segment hervorheben.
+                QFont sliceFont =
+                    normalSliceFont;
+
+                sliceFont.setBold(
+                    highlighted
+                );
+
+                slice->setLabelFont(
+                    sliceFont
+                );
+
+
+                // Passenden Legendeneintrag hervorheben.
+                QFont legendFont =
+                    normalLegendFont;
+
+                legendFont.setBold(
+                    highlighted
+                );
+
+                pieMarker->setFont(
+                    legendFont
+                );
+            };
+
+
+        // Maus über Kreis-Segment.
+        connect(
+            slice,
+            &QPieSlice::hovered,
+            this,
+            setHighlighted
+        );
+
+
+        // Maus über Eintrag in der Legende.
+        connect(
+            pieMarker,
+            &QLegendMarker::hovered,
+            this,
+            setHighlighted
+        );
+    }
+
 
     // Dezente Animation beim Aktualisieren
     chart->setAnimationOptions(
@@ -686,6 +1009,8 @@ void BudgetCockpit::addTransaction()
 
         currentCsvFilePath =
             filePath;
+
+        updateActiveFileDisplay();
     }
 
 
@@ -727,6 +1052,8 @@ void BudgetCockpit::addTransaction()
         // wurde, auch den vorherigen Dateizustand herstellen.
         currentCsvFilePath =
             previousCsvFilePath;
+
+        updateActiveFileDisplay();
 
         statusBar()->showMessage(
             "Buchung wurde nicht übernommen.",
@@ -1140,7 +1467,7 @@ void BudgetCockpit::applyFilter()
     );
 
 
-    
+
     // Aktiven Filter auch im Reiter Auswertung anzeigen.
     syncBookingFilterToAnalysis();
 
@@ -1384,6 +1711,8 @@ void BudgetCockpit::createNewCsvFile()
     currentCsvFilePath =
         filePath;
 
+    updateActiveFileDisplay();
+
 
     // --------------------------------------------------------
     // 5. Ansicht zurücksetzen
@@ -1399,10 +1728,8 @@ void BudgetCockpit::createNewCsvFile()
     // --------------------------------------------------------
 
     statusBar()->showMessage(
-        "Aktive Budget-Datei: " +
-        QFileInfo(
-            currentCsvFilePath
-        ).fileName()
+        "Neue Budget-Datei erstellt.",
+        4000
     );
 
 
@@ -1479,6 +1806,7 @@ void BudgetCockpit::openCsvFile()
     currentCsvFilePath =
         filePath;
 
+    updateActiveFileDisplay();
 
     // Aktuelle Ansicht aktualisieren.
     displayedTransactions =
@@ -1505,8 +1833,8 @@ void BudgetCockpit::openCsvFile()
 
     // Aktuell aktive Datei in der Statusleiste anzeigen.
     statusBar()->showMessage(
-        "Aktive Budget-Datei: " +
-        QFileInfo(filePath).fileName()
+        "Budget-Datei geladen.",
+        4000
     );
 
 
@@ -1591,10 +1919,12 @@ void BudgetCockpit::saveCsvFile()
     currentCsvFilePath =
         finalFilePath;
 
+    updateActiveFileDisplay();
+
     // Aktive Datei anzeigen.
     statusBar()->showMessage(
-        "Aktive Budget-Datei: " +
-        QFileInfo(currentCsvFilePath).fileName()
+        "Budget-Datei gespeichert.",
+        4000
     );
 
     const int savedCount =
