@@ -79,6 +79,13 @@ BudgetCockpit::BudgetCockpit(QWidget* parent)
     );
 
     connect(
+        ui.btnNewCsv,
+        &QPushButton::clicked,
+        this,
+        &BudgetCockpit::createNewCsvFile
+    );
+
+    connect(
         ui.btnLoadCsv,
         &QPushButton::clicked,
         this,
@@ -1271,6 +1278,153 @@ void BudgetCockpit::resetFilter()
 // ============================================================
 // CSV-Funktionen
 // ============================================================
+
+
+
+// --------------------------------------------------------
+// Neue leere Budget-Datei erstellen
+// --------------------------------------------------------
+
+void BudgetCockpit::createNewCsvFile()
+{
+    // --------------------------------------------------------
+    // 1. Sicherheitsabfrage
+    // --------------------------------------------------------
+
+    const QMessageBox::StandardButton answer =
+        QMessageBox::question(
+            this,
+            "Neue Budget-Datei",
+            "Möchten Sie eine neue leere Budget-Datei anlegen?\n\n"
+            "Die aktuell dargestellten Buchungen werden aus der "
+            "Anwendung entfernt.\n"
+            "Eine bereits geöffnete Budget-Datei bleibt unverändert erhalten.",
+            QMessageBox::Yes |
+            QMessageBox::No,
+            QMessageBox::No
+        );
+
+
+    if (answer != QMessageBox::Yes)
+    {
+        return;
+    }
+
+
+    // --------------------------------------------------------
+    // 2. Speicherort auswählen
+    // --------------------------------------------------------
+
+    QString filePath =
+        QFileDialog::getSaveFileName(
+            this,
+            "Neue Budget-Datei erstellen",
+            QString(),
+            "CSV-Dateien (*.csv);;Alle Dateien (*.*)"
+        );
+
+
+    // Nutzer hat den Dialog abgebrochen.
+    if (filePath.isEmpty())
+    {
+        return;
+    }
+
+
+    // Falls keine Dateiendung angegeben wurde,
+    // automatisch .csv ergänzen.
+    if (!filePath.endsWith(
+        ".csv",
+        Qt::CaseInsensitive))
+    {
+        filePath += ".csv";
+    }
+
+
+    // --------------------------------------------------------
+    // 3. Leere Budget-Datei speichern
+    // --------------------------------------------------------
+
+    const QList<Transaction> emptyTransactions;
+
+    QString errorMessage;
+
+
+    const bool success =
+        csvRepository.save(
+            filePath,
+            emptyTransactions,
+            &errorMessage
+        );
+
+
+    if (!success)
+    {
+        QMessageBox::critical(
+            this,
+            "Budget-Datei konnte nicht erstellt werden",
+            errorMessage
+        );
+
+        return;
+    }
+
+
+    // --------------------------------------------------------
+    // 4. Leeren Datenbestand übernehmen
+    // --------------------------------------------------------
+
+    budgetManager.setTransactions(
+        emptyTransactions
+    );
+
+
+    // Die neu erstellte Datei ist ab jetzt
+    // die aktive Arbeitsdatei.
+    currentCsvFilePath =
+        filePath;
+
+
+    // --------------------------------------------------------
+    // 5. Ansicht zurücksetzen
+    // --------------------------------------------------------
+
+    displayedTransactions.clear();
+
+    resetFilter();
+
+
+    // --------------------------------------------------------
+    // 6. Nutzer informieren
+    // --------------------------------------------------------
+
+    statusBar()->showMessage(
+        "Aktive Budget-Datei: " +
+        QFileInfo(
+            currentCsvFilePath
+        ).fileName()
+    );
+
+
+    QMessageBox::information(
+        this,
+        "Budget-Datei erstellt",
+        QString(
+            "Die neue Budget-Datei \"%1\" wurde erfolgreich erstellt."
+        )
+        .arg(
+            QFileInfo(
+                currentCsvFilePath
+            ).fileName()
+        )
+    );
+}
+
+
+// --------------------------------------------------------
+// Budget-Datei öffnen
+// --------------------------------------------------------
+
 
 void BudgetCockpit::openCsvFile()
 {

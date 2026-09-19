@@ -31,6 +31,7 @@ private slots:
     void resetFilter();
 
     // CSV-Persistenz-Datei öffnen
+    void createNewCsvFile();
     void openCsvFile();
     void saveCsvFile();
 

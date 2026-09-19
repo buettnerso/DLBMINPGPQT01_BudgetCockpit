@@ -79,7 +79,7 @@
     <item>
      <widget class="QTabWidget" name="tabMain">
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tabTransactions">
        <attribute name="title">
@@ -442,6 +442,19 @@
                </property>
                <property name="text">
                 <string>Filter zurücksetzen</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="btnNewCsv">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>34</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Neue Budget-CSV anlegen</string>
                </property>
               </widget>
              </item>
