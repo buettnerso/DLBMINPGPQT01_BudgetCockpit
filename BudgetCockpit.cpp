@@ -1114,6 +1114,8 @@ void BudgetCockpit::applyFilter()
             maxAmount
         );
 
+    filterActive = true;
+
 
     // --------------------------------------------------------
     // 6. Tabelle aktualisieren
@@ -1138,9 +1140,7 @@ void BudgetCockpit::applyFilter()
     );
 
 
-    // Filter ist ab jetzt aktiv.
-    filterActive = true;
-
+    
     // Aktiven Filter auch im Reiter Auswertung anzeigen.
     syncBookingFilterToAnalysis();
 

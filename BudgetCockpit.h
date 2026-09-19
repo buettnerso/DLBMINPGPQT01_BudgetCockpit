@@ -219,14 +219,22 @@ private:
         );
 
 
-        const int transactionCount =
+        const int count =
             transactions.size();
 
+        const QString viewStatus =
+            filterActive
+            ? "Gefiltert"
+            : "Ungefiltert";
+
         ui.lblCurrentView->setText(
-            QString("%1 %2")
-            .arg(transactionCount)
+            QString(
+                "%1\n%2 %3"
+            )
+            .arg(viewStatus)
+            .arg(count)
             .arg(
-                transactionCount == 1
+                count == 1
                 ? "Buchung"
                 : "Buchungen"
             )
