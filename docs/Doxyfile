@@ -1,0 +1,9 @@
+PROJECT_NAME           = "BudgetCockpit"
+OUTPUT_DIRECTORY       = docs/api
+INPUT                  = .
+RECURSIVE              = YES
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = NO
+QUIET                  = YES
